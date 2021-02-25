@@ -73,7 +73,7 @@ class Ui_welcome_window(object):
     # setupUi
 
     def retranslateUi(self, welcome_window):
-        welcome_window.setWindowTitle(QCoreApplication.translate("welcome_window", u"MainWindow", None))
+        welcome_window.setWindowTitle(QCoreApplication.translate("welcome_window", u"Welcome Window", None))
         self.title.setText(QCoreApplication.translate("welcome_window", u"Company Manager", None))
         self.add_company_btn.setText(QCoreApplication.translate("welcome_window", u"Add new company", None))
         self.start_btn.setText(QCoreApplication.translate("welcome_window", u"Start", None))

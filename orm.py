@@ -31,8 +31,8 @@ class Customer(Base):
     name = Column(String)
     full_name = Column(String)
     country = Column(String)
-    nip = Column(Integer(10))
-    zip_code = Column(Integer(5))
+    nip = Column(String(10))
+    zip_code = Column(String(5))
     city = Column(String)
     address = Column(String)
 
@@ -44,8 +44,8 @@ class Supplier(Base):
     name = Column(String)
     full_name = Column(String)
     country = Column(String)
-    nip = Column(Integer(10))
-    zip_code = Column(Integer(5))
+    nip = Column(String(10))
+    zip_code = Column(String(5))
     city = Column(String)
     address = Column(String)
 
@@ -61,8 +61,8 @@ class Product(Base):
 class PriceTable(Base):
     __tablename__ = 'price_tables'
 
-    product_id = Column(Integer, ForeignKey('products.product_id'))
-    customer_id = Column(Integer, ForeignKey('customers.customer_id'))
+    product_id = Column(Integer, ForeignKey('products.id'), primary_key=True)
+    customer_id = Column(Integer, ForeignKey('customers.id'), primary_key=True)
     price = Column(Float)
 
 
@@ -83,9 +83,21 @@ class OrderDetail(Base):
     quantity = Column(Integer)
 
 
+# DataBase manager
 
-dal = DataAccessLayer()
-dal.conn_string = r"sqlite:///my_db.db"
-dal.echo = True
-dal.connect()
-dal.session = dal.session_maker()
+
+class DBManager:
+
+    def __init__(self):
+        dal = DataAccessLayer()
+        dal.conn_string = r"sqlite:///my_db.db"
+        dal.echo = True
+        dal.connect()
+        self.session = dal.session_maker()
+
+    def get_companies_names(self):
+        return self.session.query(Supplier.name).all()
+
+
+
+db_manager = DBManager()
