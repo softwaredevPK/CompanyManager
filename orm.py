@@ -31,10 +31,12 @@ class Customer(Base):
     name = Column(String)
     full_name = Column(String)
     country = Column(String)
-    nip = Column(String(10))
-    zip_code = Column(String(5))
+    tin_code = Column(String)
+    zip_code = Column(String)
     city = Column(String)
     address = Column(String)
+    email = Column(String)
+    phone_number = Column(Integer)
 
 
 class Supplier(Base):
@@ -83,6 +85,13 @@ class OrderDetail(Base):
     quantity = Column(Integer)
 
 
+class Country(Base):
+    __tablename__ = 'countries'
+
+    name = Column(String)
+    code = Column(String(2), primary_key=True)
+
+
 # DataBase manager
 
 
@@ -93,11 +102,32 @@ class DBManager:
         dal.conn_string = r"sqlite:///my_db.db"
         dal.echo = True
         dal.connect()
+        self.engine = dal.engine
         self.session = dal.session_maker()
 
     def get_companies_names(self):
-        return self.session.query(Supplier.name).all()
+        return [i[0] for i in self.session.query(Supplier.name).all()]
 
+    def get_countries_names(self):
+        return [i[0] for i in self.session.query(Country.name).all()]
+
+    def get_country_code(self, country):
+        return self.session.query(Country.code).filter(Country.name == country).one()[0]
 
 
 db_manager = DBManager()
+
+
+if __name__ == '__main__':
+    #  use to populate DB with countries
+    import pandas as pd
+    from pathlib import Path
+
+    df = pd.read_csv(Path().absolute().joinpath('Countries_table.csv'))
+    df = df[~pd.isna(df['Alpha-2 code'])]
+    df['Country'] = df['Country'].str.replace('\(.*\)', '').str.replace('\[.*\]', '').str.strip()
+    items = []
+    for _, row in df.iterrows():
+        items.append(Country(name=row['Country'], code=row['Alpha-2 code']))
+    db_manager.session.add_all(items)
+    db_manager.session.commit()

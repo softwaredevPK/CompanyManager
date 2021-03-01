@@ -22,37 +22,37 @@ class Ui_welcome_window(object):
         self.centralwidget.setObjectName(u"centralwidget")
         self.verticalLayout = QVBoxLayout(self.centralwidget)
         self.verticalLayout.setObjectName(u"verticalLayout")
-        self.title = QLabel(self.centralwidget)
-        self.title.setObjectName(u"title")
-        self.title.setMinimumSize(QSize(0, 100))
+        self.title_DW = QLabel(self.centralwidget)
+        self.title_DW.setObjectName(u"title_DW")
+        self.title_DW.setMinimumSize(QSize(0, 100))
         font = QFont()
         font.setFamily(u"MS Sans Serif")
         font.setPointSize(22)
         font.setBold(True)
         font.setWeight(75)
-        self.title.setFont(font)
-        self.title.setAlignment(Qt.AlignCenter)
+        self.title_DW.setFont(font)
+        self.title_DW.setAlignment(Qt.AlignCenter)
 
-        self.verticalLayout.addWidget(self.title)
+        self.verticalLayout.addWidget(self.title_DW)
 
         self.verticalSpacer_2 = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
 
         self.verticalLayout.addItem(self.verticalSpacer_2)
 
-        self.add_company_btn = QPushButton(self.centralwidget)
-        self.add_company_btn.setObjectName(u"add_company_btn")
+        self.add_company_B = QPushButton(self.centralwidget)
+        self.add_company_B.setObjectName(u"add_company_B")
 
-        self.verticalLayout.addWidget(self.add_company_btn)
+        self.verticalLayout.addWidget(self.add_company_B)
 
-        self.company_combo_box = QComboBox(self.centralwidget)
-        self.company_combo_box.setObjectName(u"company_combo_box")
+        self.company_IW = QComboBox(self.centralwidget)
+        self.company_IW.setObjectName(u"company_IW")
 
-        self.verticalLayout.addWidget(self.company_combo_box)
+        self.verticalLayout.addWidget(self.company_IW)
 
-        self.start_btn = QPushButton(self.centralwidget)
-        self.start_btn.setObjectName(u"start_btn")
+        self.start_B = QPushButton(self.centralwidget)
+        self.start_B.setObjectName(u"start_B")
 
-        self.verticalLayout.addWidget(self.start_btn)
+        self.verticalLayout.addWidget(self.start_B)
 
         self.verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
 
@@ -74,8 +74,8 @@ class Ui_welcome_window(object):
 
     def retranslateUi(self, welcome_window):
         welcome_window.setWindowTitle(QCoreApplication.translate("welcome_window", u"Welcome Window", None))
-        self.title.setText(QCoreApplication.translate("welcome_window", u"Company Manager", None))
-        self.add_company_btn.setText(QCoreApplication.translate("welcome_window", u"Add new company", None))
-        self.start_btn.setText(QCoreApplication.translate("welcome_window", u"Start", None))
+        self.title_DW.setText(QCoreApplication.translate("welcome_window", u"Company Manager", None))
+        self.add_company_B.setText(QCoreApplication.translate("welcome_window", u"Add new company", None))
+        self.start_B.setText(QCoreApplication.translate("welcome_window", u"Start", None))
     # retranslateUi
 

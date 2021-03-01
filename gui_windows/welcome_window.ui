@@ -16,7 +16,7 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
-     <widget class="QLabel" name="title">
+     <widget class="QLabel" name="title_DW">
       <property name="minimumSize">
        <size>
         <width>0</width>
@@ -53,17 +53,17 @@
      </spacer>
     </item>
     <item>
-     <widget class="QPushButton" name="add_company_btn">
+     <widget class="QPushButton" name="add_company_B">
       <property name="text">
        <string>Add new company</string>
       </property>
      </widget>
     </item>
     <item>
-     <widget class="QComboBox" name="company_combo_box"/>
+     <widget class="QComboBox" name="company_IW"/>
     </item>
     <item>
-     <widget class="QPushButton" name="start_btn">
+     <widget class="QPushButton" name="start_B">
       <property name="text">
        <string>Start</string>
       </property>
