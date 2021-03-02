@@ -1,37 +1,64 @@
 from gui_windows.welcome_window import Ui_welcome_window
 from gui_windows.AddContractorWidget import Ui_add_contractor_QWidget
 from PySide2 import QtCore, QtGui, QtWidgets
-from orm import db_manager, Customer
+from orm import db_manager, Customer, Supplier
 from functools import partial
 
-# TODO possibility to add Company only if DB is empty! Wanna to show button to add it only for empty db
+
 class WelcomeWindow(QtWidgets.QMainWindow):
 
     def __init__(self):
         super().__init__()
         self.ui = Ui_welcome_window()
         self.ui.setupUi(self)
-        self.add_contractor = AddCustomer()
         self._connect()
 
     def _connect(self):
-        self.ui.add_company_B.clicked.connect(self.add_company)
+        self.ui.edit_B.clicked.connect(self.edit)
         self.ui.start_B.clicked.connect(self.start)
 
+    def check_settings(self):
+        """Method used to check if Company Account was created.
+         If it return False, then window shouldn't use show method."""
+        if not db_manager.is_supplier_created():  # before showing window check if acc is created
+            if not self.add_company():  # if user would close window without creating acc do not open window
+                return False
+            else:
+                return True
+        else:
+            return True
+
     def add_company(self):
-        self.add_contractor.exec_()
-        self.refresh_companies_box()
+        """Method used to create Company(user) Account"""
+        add_company = AddCompany()
+        self.show_msg_box()
+        if not add_company.exec_():  # if user closes window - meaning resign from creating acc
+            return False
+        else:
+            return True
+
+    @staticmethod
+    def show_msg_box():
+        """Message box with information of need to create company acc"""
+        msg = QtWidgets.QMessageBox()
+        msg.setText('Please setup your company account')
+        msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+        msg.exec_()
 
     def start(self):
+        """Method used to start a program"""
         ...
 
-    def refresh_companies_box(self):
-        self.ui.company_IW.clear()
-        items = db_manager.get_companies_names()
-        self.ui.company_IW.addItems(items)
+    def edit(self):
+        """Method used to edit company setting(Record in DB)"""
+        ...
 
 
 class AddCustomer(QtWidgets.QDialog):
+    """
+    Widget used to add new Customers to DB
+    """
+
     def __init__(self):
         super().__init__()
         self.ui = Ui_add_contractor_QWidget()
@@ -80,6 +107,10 @@ class AddCustomer(QtWidgets.QDialog):
     def set_connections(self):
         self.ui.company_B.toggled.connect(self.to_company)
         self.ui.person_B.toggled.connect(self.to_person)
+        # phone_no_validator = QtGui.QRegExpValidator("\d+", self.ui.tin_IW)
+        self.ui.tin_IW.setValidator(QtGui.QRegExpValidator("[\d[a-zA-Z]+", self.ui.tin_IW))
+        # tin_no_validator = QtGui.QRegExpValidator("\d+", self.ui.phone_number_IW)
+        self.ui.phone_number_IW.setValidator(QtGui.QRegExpValidator("\d+", self.ui.phone_number_IW))
 
         self.ui.country_IW.addItems(db_manager.get_countries_names())
         self.ui.country_IW.setPlaceholderText('--Select Country--')
@@ -98,7 +129,7 @@ class AddCustomer(QtWidgets.QDialog):
                 field.textChanged.connect(partial(self.change_border_to_black, field))
 
     def fill_country_tin(self, country):
-        """Method for clear button to being run when is clicked"""
+        """Method updates tin_count_IW with country_code"""
         if country == '':   # when setting back to default
             code = ''
         else:
@@ -169,9 +200,39 @@ class AddCustomer(QtWidgets.QDialog):
                                   phone_number=self.ui.phone_number_IW.text())
             db_manager.session.add(record)
             db_manager.session.commit()
-            # todo create contextmanager to deal with roll_back and commit
             self.clear()   # at the end it should clear all field
 
 
+class EditCustomer(AddCustomer):
+    ...
 
 
+class AddCompany(AddCustomer):
+    """
+    Widget used to add new Company(Supplier) to DB
+    """
+
+    def set_connections(self):
+        super().set_connections()
+        self.ui.company_B.setVisible(False)
+        self.ui.person_B.setVisible(False)
+
+    def add(self):
+        """Method for add button to being run when is clicked used only for supplier mode."""
+        if self.req_fields_filled():
+            record = Supplier(full_name=self.ui.long_name_IW.text(),
+                              name=self.ui.short_name_IW.text(),
+                              address=self.ui.address_IW.text(),
+                              country=self.ui.country_IW.currentText(),
+                              tin_code=self.ui.tin_IW.text(),
+                              zip_code=self.ui.zipe_code_IW.text(),
+                              city=self.ui.town_IW.text(),
+                              email=self.ui.email_IW.text(),
+                              phone_number=self.ui.phone_number_IW.text())
+            db_manager.session.add(record)
+            db_manager.session.commit()
+            self.accept()
+
+
+class EditCompany(AddCompany):
+    ...

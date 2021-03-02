@@ -26,5 +26,5 @@ Objects names refer to their text and type of widget, by use of below shortcuts:
 
 ## Other files
 1. Countries_table.csv - Configuration file with ISO 3166 country codes. Used to populate DB for the first time with countries names and codes
-
+2. my_db.db - Database created with ORM sqlalchemy. Populated with Countries_table.csv on initial.
 

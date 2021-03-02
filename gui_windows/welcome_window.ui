@@ -53,14 +53,11 @@
      </spacer>
     </item>
     <item>
-     <widget class="QPushButton" name="add_company_B">
+     <widget class="QPushButton" name="edit_B">
       <property name="text">
-       <string>Add new company</string>
+       <string>Edit company settingss</string>
       </property>
      </widget>
-    </item>
-    <item>
-     <widget class="QComboBox" name="company_IW"/>
     </item>
     <item>
      <widget class="QPushButton" name="start_B">

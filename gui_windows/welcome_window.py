@@ -39,15 +39,10 @@ class Ui_welcome_window(object):
 
         self.verticalLayout.addItem(self.verticalSpacer_2)
 
-        self.add_company_B = QPushButton(self.centralwidget)
-        self.add_company_B.setObjectName(u"add_company_B")
+        self.edit_B = QPushButton(self.centralwidget)
+        self.edit_B.setObjectName(u"edit_B")
 
-        self.verticalLayout.addWidget(self.add_company_B)
-
-        self.company_IW = QComboBox(self.centralwidget)
-        self.company_IW.setObjectName(u"company_IW")
-
-        self.verticalLayout.addWidget(self.company_IW)
+        self.verticalLayout.addWidget(self.edit_B)
 
         self.start_B = QPushButton(self.centralwidget)
         self.start_B.setObjectName(u"start_B")
@@ -75,7 +70,7 @@ class Ui_welcome_window(object):
     def retranslateUi(self, welcome_window):
         welcome_window.setWindowTitle(QCoreApplication.translate("welcome_window", u"Welcome Window", None))
         self.title_DW.setText(QCoreApplication.translate("welcome_window", u"Company Manager", None))
-        self.add_company_B.setText(QCoreApplication.translate("welcome_window", u"Add new company", None))
+        self.edit_B.setText(QCoreApplication.translate("welcome_window", u"Edit company settingss", None))
         self.start_B.setText(QCoreApplication.translate("welcome_window", u"Start", None))
     # retranslateUi
 

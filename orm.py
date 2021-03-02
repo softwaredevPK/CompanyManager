@@ -3,6 +3,8 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy import Column, Integer, String, Float, Date
 from sqlalchemy import create_engine, ForeignKey, CheckConstraint
 from utilities import SingleInstanceClass
+import pandas as pd
+from pathlib import Path
 
 
 Base = declarative_base()
@@ -46,10 +48,12 @@ class Supplier(Base):
     name = Column(String)
     full_name = Column(String)
     country = Column(String)
-    nip = Column(String(10))
+    tin_code = Column(String)
     zip_code = Column(String(5))
     city = Column(String)
     address = Column(String)
+    email = Column(String)
+    phone_number = Column(Integer)
 
 
 class Product(Base):
@@ -114,15 +118,24 @@ class DBManager:
     def get_country_code(self, country):
         return self.session.query(Country.code).filter(Country.name == country).one()[0]
 
+    def is_supplier_created(self):
+        if len(self.session.query(Supplier).all()) > 0:
+            return True
+        else:
+            return False
+
+    def are_countries_populated(self):
+        if len(self.get_countries_names()) == 0:
+            return False
+        else:
+            return True
+
 
 db_manager = DBManager()
 
 
-if __name__ == '__main__':
+def populate_countries():
     #  use to populate DB with countries
-    import pandas as pd
-    from pathlib import Path
-
     df = pd.read_csv(Path().absolute().joinpath('Countries_table.csv'))
     df = df[~pd.isna(df['Alpha-2 code'])]
     df['Country'] = df['Country'].str.replace('\(.*\)', '').str.replace('\[.*\]', '').str.strip()
@@ -131,3 +144,4 @@ if __name__ == '__main__':
         items.append(Country(name=row['Country'], code=row['Alpha-2 code']))
     db_manager.session.add_all(items)
     db_manager.session.commit()
+
