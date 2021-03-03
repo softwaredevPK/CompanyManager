@@ -1,6 +1,6 @@
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import Column, Integer, String, Float, Date
+from sqlalchemy import Column, Integer, String, Float, Date, Boolean
 from sqlalchemy import create_engine, ForeignKey, CheckConstraint
 from utilities import SingleInstanceClass
 import pandas as pd
@@ -32,13 +32,14 @@ class Customer(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String)
     full_name = Column(String)
-    country = Column(String)
+    country = Column(String, ForeignKey('countries.name'))
     tin_code = Column(String)
     zip_code = Column(String)
     city = Column(String)
     address = Column(String)
     email = Column(String)
     phone_number = Column(Integer)
+    is_person = Column(Boolean)
 
 
 class Supplier(Base):
@@ -47,7 +48,7 @@ class Supplier(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String)
     full_name = Column(String)
-    country = Column(String)
+    country = Column(String, ForeignKey('countries.name'))
     tin_code = Column(String)
     zip_code = Column(String(5))
     city = Column(String)
@@ -129,6 +130,9 @@ class DBManager:
             return False
         else:
             return True
+
+    def get_company(self):
+        return self.session.query(Supplier).one()
 
 
 db_manager = DBManager()

@@ -51,7 +51,9 @@ class WelcomeWindow(QtWidgets.QMainWindow):
 
     def edit(self):
         """Method used to edit company setting(Record in DB)"""
-        ...
+        company = db_manager.get_company()
+        edit_company = EditCompany(company)
+        edit_company.exec_()
 
 
 class AddCustomer(QtWidgets.QDialog):
@@ -189,7 +191,8 @@ class AddCustomer(QtWidgets.QDialog):
                                   zip_code=self.ui.zipe_code_IW.text(),
                                   city=self.ui.town_IW.text(),
                                   email=self.ui.email_IW.text(),
-                                  phone_number=self.ui.phone_number_IW.text())
+                                  phone_number=self.ui.phone_number_IW.text(),
+                                  is_person=False)
             elif self.ui.person_B.isChecked():
                 record = Customer(name=self.ui.first_name_IW.text() + self.ui.surname_IW.text(),
                                   full_name=self.ui.first_name_IW.text() + self.ui.second_name_IW.text() + self.ui.surname_IW.text(),
@@ -197,14 +200,59 @@ class AddCustomer(QtWidgets.QDialog):
                                   zip_code=self.ui.zipe_code_IW.text(),
                                   city=self.ui.town_IW.text(),
                                   email=self.ui.email_IW.text(),
-                                  phone_number=self.ui.phone_number_IW.text())
+                                  phone_number=self.ui.phone_number_IW.text(),
+                                  is_person=True)
             db_manager.session.add(record)
             db_manager.session.commit()
             self.clear()   # at the end it should clear all field
 
 
 class EditCustomer(AddCustomer):
-    ...
+    def __init__(self, customer: Customer):
+        super().__init__()
+        self.customer = customer
+        self.ui.add_B.setText("Save")
+        self.ui.add_B.clicked.connect(self.update)  # change of method connected to button
+        self.write_values()
+
+    def add(self):
+        raise Exception("Method not in use")
+
+    def write_values(self):
+        """Write values of Customer to appropriate IW"""
+        self.ui.long_name_IW.setText(self.customer.full_name)
+        self.ui.short_name_IW.setText(self.customer.name)
+        self.ui.country_IW.setCurrentText(self.customer.country)
+        self.ui.tin_IW.setText(self.customer.tin_code)
+        self.ui.address_IW.setText(self.customer.address)
+        self.ui.town_IW.setText(self.customer.city)
+        self.ui.zipe_code_IW.setText(self.customer.zip_code)
+        self.ui.email_IW.setText(self.customer.email)
+        self.ui.phone_number_IW.setText(self.customer.phone_number)
+
+    def update(self):
+        if self.req_fields_filled():
+            if self.ui.company_B.isChecked():
+                self.customer.is_person = False
+                self.customer.full_name = self.ui.long_name_IW.text()
+                self.customer.name = self.ui.short_name_IW.text()
+                self.customer.country = self.ui.country_IW.currentText()
+                self.customer.tin_code = self.ui.tin_IW.text()
+            elif self.ui.person_B.isChecked():
+                self.customer.is_person = True
+                self.customer.full_name = self.ui.first_name_IW.text() + self.ui.second_name_IW.text() + self.ui.surname_IW.text()
+                self.customer.name = self.ui.first_name_IW.text() + self.ui.surname_IW.text()
+                self.customer.country = ''
+                self.customer.tin_code = ''
+
+            self.customer.address = self.ui.address_IW.text()
+            self.customer.city = self.ui.town_IW.text()
+            self.customer.zip_code = self.ui.zipe_code_IW.text()
+            self.customer.email = self.ui.email_IW.text()
+            self.customer.phone_number = self.ui.phone_number_IW.text()
+
+            db_manager.session.commit()
+            self.accept()
 
 
 class AddCompany(AddCustomer):
@@ -235,4 +283,40 @@ class AddCompany(AddCustomer):
 
 
 class EditCompany(AddCompany):
-    ...
+    def __init__(self, company: Supplier):
+        super().__init__()
+        self.company = company
+        self.ui.add_B.setText("Save")
+        self.ui.add_B.clicked.disconnect()
+        self.ui.add_B.clicked.connect(self.update)  # change of method connected to button
+        self.write_values()
+
+    def add(self):
+        raise Exception("Method not in use")
+
+    def write_values(self):
+        """Write values of Company to appropriate IW"""
+        self.ui.long_name_IW.setText(self.company.full_name)
+        self.ui.short_name_IW.setText(self.company.name)
+        self.ui.country_IW.setCurrentText(self.company.country)
+        self.ui.tin_IW.setText(self.company.tin_code)
+        self.ui.address_IW.setText(self.company.address)
+        self.ui.town_IW.setText(self.company.city)
+        self.ui.zipe_code_IW.setText(self.company.zip_code)
+        self.ui.email_IW.setText(self.company.email)
+        self.ui.phone_number_IW.setText(str(self.company.phone_number))
+
+    def update(self):
+        if self.req_fields_filled():
+            self.company.full_name = self.ui.long_name_IW.text()
+            self.company.name = self.ui.short_name_IW.text()
+            self.company.country = self.ui.country_IW.currentText()
+            self.company.tin_code = self.ui.tin_IW.text()
+            self.company.address = self.ui.address_IW.text()
+            self.company.city = self.ui.town_IW.text()
+            self.company.zip_code = self.ui.zipe_code_IW.text()
+            self.company.email = self.ui.email_IW.text()
+            self.company.phone_number = self.ui.phone_number_IW.text()
+            db_manager.session.commit()
+            self.accept()
+
