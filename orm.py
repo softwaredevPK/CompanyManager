@@ -134,6 +134,8 @@ class DBManager:
     def get_company(self):
         return self.session.query(Supplier).one()
 
+    def get_customers(self):
+        return [i[0] for i in self.session.query(Customer.name).all()]
 
 db_manager = DBManager()
 

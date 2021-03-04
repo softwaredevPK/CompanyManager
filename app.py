@@ -1,17 +1,20 @@
 from gui_windows.welcome_window import Ui_welcome_window
 from gui_windows.AddContractorWidget import Ui_add_contractor_QWidget
+from gui_windows.start_window import Ui_StartWindow
 from PySide2 import QtCore, QtGui, QtWidgets
 from orm import db_manager, Customer, Supplier
 from functools import partial
 
 
 class WelcomeWindow(QtWidgets.QMainWindow):
+    """First window that appers after launch of tool(If Company is created)"""
 
     def __init__(self):
         super().__init__()
         self.ui = Ui_welcome_window()
         self.ui.setupUi(self)
         self._connect()
+        self.start_window = StartWindow
 
     def _connect(self):
         self.ui.edit_B.clicked.connect(self.edit)
@@ -47,13 +50,45 @@ class WelcomeWindow(QtWidgets.QMainWindow):
 
     def start(self):
         """Method used to start a program"""
-        ...
+        self.start_window = self.start_window()
+        self.close()
+        self.start_window.show()
 
     def edit(self):
         """Method used to edit company setting(Record in DB)"""
         company = db_manager.get_company()
         edit_company = EditCompany(company)
         edit_company.exec_()
+
+
+class StartWindow(QtWidgets.QMainWindow):
+
+    def __init__(self):
+        super().__init__()
+        self.ui = Ui_StartWindow()
+        self.ui.setupUi(self)
+        self._connect()
+
+    def _connect(self):
+        self.ui.add_customer_B.clicked.connect(self.add_customer)
+        self.ui.edit_customer_B.clicked.connect(self.edit_customer)
+        self.ui.my_procust_B.clicked.connect(self.my_products)
+
+    def edit_customer(self):
+        items = db_manager.get_customers()
+        if len(items) == 0:
+            msg_box = QtWidgets.QMessageBox(icon=QtWidgets.QMessageBox.Information, text="There are no customers in your DataBase.")
+            msg_box.exec_()
+        else:
+            text, ok = QtWidgets.QInputDialog.getItem(self, 'Editor', 'Choose customer to edit', items, 0, False)
+
+
+    def add_customer(self):
+        add_cust = AddCustomer()
+        add_cust.exec_()
+
+    def my_products(self):
+        ...
 
 
 class AddCustomer(QtWidgets.QDialog):

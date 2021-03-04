@@ -15,13 +15,15 @@ Part of github portfolio to show current skills as Process Improvement Specialis
 Project uses sqlite DataBase, which scheme is published on
 [dbdesigner.net](https://dbdesigner.page.link/KBXNfS5kDVTwjB6R6).
 
+To build GUI Qt Designer was used as part of PySide2 library. 
 
 ## Technologies
 
 Project is fully build with python and its open source libraries:
-* sqlalchemy - to manage DataBase
-* PySide2 with Qt Designer - to build GUI
-* pandas - to deal with .csv files
+
+- **sqlalchemy**- to manage DataBase
+- **PySide2**- to build GUI
+- **pandas** - to deal with .csv files
 
 ### PySide2 namespace
 Objects names refer to their text and type of widget, by use of below shortcuts:
