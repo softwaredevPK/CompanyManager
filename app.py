@@ -4,6 +4,7 @@ from gui_windows.start_window import Ui_StartWindow
 from PySide2 import QtCore, QtGui, QtWidgets
 from orm import db_manager, Customer, Supplier
 from functools import partial
+from utilities import show_msg_box
 
 
 class WelcomeWindow(QtWidgets.QMainWindow):
@@ -34,19 +35,12 @@ class WelcomeWindow(QtWidgets.QMainWindow):
     def add_company(self):
         """Method used to create Company(user) Account"""
         add_company = AddCompany()
-        self.show_msg_box()
+        show_msg_box('Please setup your company account')
         if not add_company.exec_():  # if user closes window - meaning resign from creating acc
             return False
         else:
             return True
 
-    @staticmethod
-    def show_msg_box():
-        """Message box with information of need to create company acc"""
-        msg = QtWidgets.QMessageBox()
-        msg.setText('Please setup your company account')
-        msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
-        msg.exec_()
 
     def start(self):
         """Method used to start a program"""
@@ -75,13 +69,14 @@ class StartWindow(QtWidgets.QMainWindow):
         self.ui.my_procust_B.clicked.connect(self.my_products)
 
     def edit_customer(self):
-        items = db_manager.get_customers()
+        items = db_manager.get_customers_names()
         if len(items) == 0:
             msg_box = QtWidgets.QMessageBox(icon=QtWidgets.QMessageBox.Information, text="There are no customers in your DataBase.")
             msg_box.exec_()
         else:
             text, ok = QtWidgets.QInputDialog.getItem(self, 'Editor', 'Choose customer to edit', items, 0, False)
-
+        if ok:  # not canceled
+            db_manager.get_customer()
 
     def add_customer(self):
         add_cust = AddCustomer()
@@ -237,8 +232,13 @@ class AddCustomer(QtWidgets.QDialog):
                                   email=self.ui.email_IW.text(),
                                   phone_number=self.ui.phone_number_IW.text(),
                                   is_person=True)
-            db_manager.session.add(record)
-            db_manager.session.commit()
+            check_res = db_manager.check_customer_constraints(record)
+            if check_res:
+                show_msg_box(check_res)
+            else:
+                db_manager.session.add(record)
+                db_manager.session.commit()
+
             self.clear()   # at the end it should clear all field
 
 

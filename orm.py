@@ -1,7 +1,7 @@
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, column_property
 from sqlalchemy import Column, Integer, String, Float, Date, Boolean
-from sqlalchemy import create_engine, ForeignKey, CheckConstraint
+from sqlalchemy import create_engine, ForeignKey, CheckConstraint, UniqueConstraint
 from utilities import SingleInstanceClass
 import pandas as pd
 from pathlib import Path
@@ -30,8 +30,8 @@ class Customer(Base):
     __tablename__ = 'customers'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String)
-    full_name = Column(String)
+    name = Column(String, unique=True)
+    full_name = Column(String, unique=True)
     country = Column(String, ForeignKey('countries.name'))
     tin_code = Column(String)
     zip_code = Column(String)
@@ -40,6 +40,9 @@ class Customer(Base):
     email = Column(String)
     phone_number = Column(Integer)
     is_person = Column(Boolean)
+    country_tin = column_property(country + tin_code)
+
+    __table_args__ = (UniqueConstraint(country, tin_code, name='country_tin'),)
 
 
 class Supplier(Base):
@@ -134,8 +137,28 @@ class DBManager:
     def get_company(self):
         return self.session.query(Supplier).one()
 
-    def get_customers(self):
+    def get_customers_names(self):
         return [i[0] for i in self.session.query(Customer.name).all()]
+
+    def get_customers_full_names(self):
+        return [i[0] for i in self.session.query(Customer.full_name).all()]
+
+    def get_customers_country_tin_codes(self):
+        return [i[0] for i in self.session.query(Customer.country_tin).all()]
+
+    def get_customer(self, customer_name):
+        return self.session.query(Customer).filter(Customer.name == customer_name).one()
+
+    def check_customer_constraints(self, customer):
+        if customer.name in set(self.get_customers_names()):
+            return '1'
+        elif customer.full_name in set(self.get_customers_full_names()):
+            return '2'
+        elif customer.country + customer.tin_code in set(self.get_customers_country_tin_codes()):
+            return ' 3'
+        else:
+            return True
+
 
 db_manager = DBManager()
 
