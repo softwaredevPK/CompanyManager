@@ -2,9 +2,10 @@ from gui_windows.welcome_window import Ui_welcome_window
 from gui_windows.AddContractorWidget import Ui_add_contractor_QWidget
 from gui_windows.start_window import Ui_StartWindow
 from PySide2 import QtCore, QtGui, QtWidgets
-from orm import db_manager, Customer, Supplier
+from orm import Customer, Supplier
+from db_manager import db_manager
 from functools import partial
-from utilities import show_msg_box
+from utilities import show_msg_box, MessageError
 
 
 class WelcomeWindow(QtWidgets.QMainWindow):
@@ -41,7 +42,6 @@ class WelcomeWindow(QtWidgets.QMainWindow):
         else:
             return True
 
-
     def start(self):
         """Method used to start a program"""
         self.start_window = self.start_window()
@@ -74,9 +74,11 @@ class StartWindow(QtWidgets.QMainWindow):
             msg_box = QtWidgets.QMessageBox(icon=QtWidgets.QMessageBox.Information, text="There are no customers in your DataBase.")
             msg_box.exec_()
         else:
-            text, ok = QtWidgets.QInputDialog.getItem(self, 'Editor', 'Choose customer to edit', items, 0, False)
+            customer_name, ok = QtWidgets.QInputDialog.getItem(self, 'Editor', 'Choose customer to edit', items, 0, False)
         if ok:  # not canceled
-            db_manager.get_customer()
+            customer = db_manager.get_customer(customer_name)
+            edit_cust = EditCustomer(customer)
+            edit_cust.exec_()
 
     def add_customer(self):
         add_cust = AddCustomer()
@@ -136,12 +138,20 @@ class AddCustomer(QtWidgets.QDialog):
             if hasattr(arg, 'setStyleSheet'):
                 arg.setStyleSheet("border: 1px solid black")
 
+    @staticmethod
+    def check_customer_constraints(customer):
+        """Method checks if unique fields of customer are currently in use. """
+        if db_manager.check_customer_names_constraint(customer.name):
+            raise MessageError('Customer short name already is used')
+        elif db_manager.check_customer_full_name_constraint(customer.full_name):
+            raise MessageError('Customer long name already is used')
+        elif db_manager.check_customer_country_tin_constraint(customer.country, customer.tin_code):
+            raise MessageError('Customer country and tin_code already are used')
+
     def set_connections(self):
         self.ui.company_B.toggled.connect(self.to_company)
         self.ui.person_B.toggled.connect(self.to_person)
-        # phone_no_validator = QtGui.QRegExpValidator("\d+", self.ui.tin_IW)
         self.ui.tin_IW.setValidator(QtGui.QRegExpValidator("[\d[a-zA-Z]+", self.ui.tin_IW))
-        # tin_no_validator = QtGui.QRegExpValidator("\d+", self.ui.phone_number_IW)
         self.ui.phone_number_IW.setValidator(QtGui.QRegExpValidator("\d+", self.ui.phone_number_IW))
 
         self.ui.country_IW.addItems(db_manager.get_countries_names())
@@ -154,7 +164,6 @@ class AddCustomer(QtWidgets.QDialog):
 
         # changing borders to black each time when user changes text for req_fields(can't use property bc need to
         for field in self.req_fields:
-
             if hasattr(field, 'currentTextChanged'):
                 field.currentTextChanged.connect(partial(self.change_border_to_black, field))
             elif hasattr(field, 'textChanged'):
@@ -232,23 +241,32 @@ class AddCustomer(QtWidgets.QDialog):
                                   email=self.ui.email_IW.text(),
                                   phone_number=self.ui.phone_number_IW.text(),
                                   is_person=True)
-            check_res = db_manager.check_customer_constraints(record)
-            if check_res:
-                show_msg_box(check_res)
+            try:
+                self.check_customer_constraints(record)
+            except MessageError as msg:
+                show_msg_box(msg)
             else:
                 db_manager.session.add(record)
                 db_manager.session.commit()
-
-            self.clear()   # at the end it should clear all field
+                self.clear()   # at the end it should clear all field
 
 
 class EditCustomer(AddCustomer):
+
     def __init__(self, customer: Customer):
         super().__init__()
         self.customer = customer
         self.ui.add_B.setText("Save")
-        self.ui.add_B.clicked.connect(self.update)  # change of method connected to button
         self.write_values()
+        self.start_country = customer.country
+        self.start_tin = customer.tin_code
+        self.start_name = customer.name
+        self.start_full_name = customer.full_name
+
+    def set_connections(self):
+        super(EditCustomer, self).set_connections()
+        self.ui.add_B.clicked.disconnect()
+        self.ui.add_B.clicked.connect(self.update)  # change of method connected to button
 
     def add(self):
         raise Exception("Method not in use")
@@ -265,29 +283,49 @@ class EditCustomer(AddCustomer):
         self.ui.email_IW.setText(self.customer.email)
         self.ui.phone_number_IW.setText(self.customer.phone_number)
 
+    def check_customer_constraints(self, name, full_name, country, tin):
+        """Method checks if unique fields of customer has changed, in such case checks if new values are free."""
+        if self.start_name != name:
+            if db_manager.check_customer_names_constraint(name):
+                raise MessageError('Customer name already in used')
+        elif self.start_full_name != full_name:
+            if db_manager.check_customer_full_name_constraint(full_name):
+                raise MessageError('Customer full_name already in used')
+        elif self.start_tin != tin and self.start_country != country:
+            if db_manager.check_customer_country_tin_constraint(country, tin):
+                raise MessageError('Customer country and tin_code already are used')
+
     def update(self):
         if self.req_fields_filled():
             if self.ui.company_B.isChecked():
-                self.customer.is_person = False
-                self.customer.full_name = self.ui.long_name_IW.text()
-                self.customer.name = self.ui.short_name_IW.text()
-                self.customer.country = self.ui.country_IW.currentText()
-                self.customer.tin_code = self.ui.tin_IW.text()
+                is_person = False
+                full_name = self.ui.long_name_IW.text()
+                name = self.ui.short_name_IW.text()
+                country = self.ui.country_IW.currentText()
+                tin_code = self.ui.tin_IW.text()
             elif self.ui.person_B.isChecked():
-                self.customer.is_person = True
-                self.customer.full_name = self.ui.first_name_IW.text() + self.ui.second_name_IW.text() + self.ui.surname_IW.text()
-                self.customer.name = self.ui.first_name_IW.text() + self.ui.surname_IW.text()
-                self.customer.country = ''
-                self.customer.tin_code = ''
-
-            self.customer.address = self.ui.address_IW.text()
-            self.customer.city = self.ui.town_IW.text()
-            self.customer.zip_code = self.ui.zipe_code_IW.text()
-            self.customer.email = self.ui.email_IW.text()
-            self.customer.phone_number = self.ui.phone_number_IW.text()
-
-            db_manager.session.commit()
-            self.accept()
+                is_person = True
+                full_name = self.ui.first_name_IW.text() + self.ui.second_name_IW.text() + self.ui.surname_IW.text()
+                name = self.ui.first_name_IW.text() + self.ui.surname_IW.text()
+                country = ''
+                tin_code = ''
+            try:
+                self.check_customer_constraints(name, full_name, country, tin_code)
+            except MessageError as msg:
+                show_msg_box(msg)
+            else:
+                self.customer.full_name = full_name
+                self.customer.name = name
+                self.customer.country = country
+                self.customer.tin_code = tin_code
+                self.customer.is_person = is_person
+                self.customer.address = self.ui.address_IW.text()
+                self.customer.city = self.ui.town_IW.text()
+                self.customer.zip_code = self.ui.zipe_code_IW.text()
+                self.customer.email = self.ui.email_IW.text()
+                self.customer.phone_number = self.ui.phone_number_IW.text()
+                db_manager.session.commit()
+                self.accept()
 
 
 class AddCompany(AddCustomer):
@@ -322,9 +360,12 @@ class EditCompany(AddCompany):
         super().__init__()
         self.company = company
         self.ui.add_B.setText("Save")
+        self.write_values()
+
+    def set_connections(self):
+        super(EditCompany, self).set_connections()
         self.ui.add_B.clicked.disconnect()
         self.ui.add_B.clicked.connect(self.update)  # change of method connected to button
-        self.write_values()
 
     def add(self):
         raise Exception("Method not in use")

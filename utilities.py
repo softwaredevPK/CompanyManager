@@ -1,4 +1,6 @@
 from PySide2 import QtWidgets
+from typing import Tuple
+
 
 class SingleInstanceClass:
     """https://python-3-patterns-idioms-test.readthedocs.io/en/latest/Singleton.html"""
@@ -10,14 +12,17 @@ class SingleInstanceClass:
         return SingleInstanceClass.__instance
 
 
-def show_msg_box(text):
+def show_msg_box(text: Tuple[str, Exception]):
     """Message box with information of need to create company acc"""
+    text = str(text)
     msg = QtWidgets.QMessageBox()
     msg.setText(text)
     msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
     msg.exec_()
 
 
+class MessageError(Exception):
+    """Error with message to show in Msgbox"""
 
 
 

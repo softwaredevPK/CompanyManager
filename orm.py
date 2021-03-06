@@ -1,29 +1,11 @@
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, column_property
+from sqlalchemy.orm import column_property, sessionmaker
 from sqlalchemy import Column, Integer, String, Float, Date, Boolean
-from sqlalchemy import create_engine, ForeignKey, CheckConstraint, UniqueConstraint
-from utilities import SingleInstanceClass
-import pandas as pd
-from pathlib import Path
+from sqlalchemy import ForeignKey, UniqueConstraint, create_engine
 
+from utilities import SingleInstanceClass
 
 Base = declarative_base()
-
-
-class DataAccessLayer(SingleInstanceClass):
-    """Class to manage access to DB"""
-
-    def __init__(self):
-        self.conn_string = None
-        self.echo = None
-        self.engine = None
-        self.session_maker = None
-        self.session = None
-
-    def connect(self):
-        self.engine = create_engine(self.conn_string, echo=self.echo)
-        Base.metadata.create_all(self.engine)
-        self.session_maker = sessionmaker(bind=self.engine)
 
 
 class Customer(Base):
@@ -99,78 +81,18 @@ class Country(Base):
     name = Column(String)
     code = Column(String(2), primary_key=True)
 
-
-# DataBase manager
-
-
-class DBManager:
+# todo SIngleTOn to rethink - rebuild
+class DataAccessLayer(SingleInstanceClass):
+    """Class to manage access to DB"""
 
     def __init__(self):
-        dal = DataAccessLayer()
-        dal.conn_string = r"sqlite:///my_db.db"
-        dal.echo = True
-        dal.connect()
-        self.engine = dal.engine
-        self.session = dal.session_maker()
+        self.conn_string = None
+        self.echo = None
+        self.engine = None
+        self.session_maker = None
+        self.session = None
 
-    def get_companies_names(self):
-        return [i[0] for i in self.session.query(Supplier.name).all()]
-
-    def get_countries_names(self):
-        return [i[0] for i in self.session.query(Country.name).all()]
-
-    def get_country_code(self, country):
-        return self.session.query(Country.code).filter(Country.name == country).one()[0]
-
-    def is_supplier_created(self):
-        if len(self.session.query(Supplier).all()) > 0:
-            return True
-        else:
-            return False
-
-    def are_countries_populated(self):
-        if len(self.get_countries_names()) == 0:
-            return False
-        else:
-            return True
-
-    def get_company(self):
-        return self.session.query(Supplier).one()
-
-    def get_customers_names(self):
-        return [i[0] for i in self.session.query(Customer.name).all()]
-
-    def get_customers_full_names(self):
-        return [i[0] for i in self.session.query(Customer.full_name).all()]
-
-    def get_customers_country_tin_codes(self):
-        return [i[0] for i in self.session.query(Customer.country_tin).all()]
-
-    def get_customer(self, customer_name):
-        return self.session.query(Customer).filter(Customer.name == customer_name).one()
-
-    def check_customer_constraints(self, customer):
-        if customer.name in set(self.get_customers_names()):
-            return '1'
-        elif customer.full_name in set(self.get_customers_full_names()):
-            return '2'
-        elif customer.country + customer.tin_code in set(self.get_customers_country_tin_codes()):
-            return ' 3'
-        else:
-            return True
-
-
-db_manager = DBManager()
-
-
-def populate_countries():
-    #  use to populate DB with countries
-    df = pd.read_csv(Path().absolute().joinpath('Countries_table.csv'))
-    df = df[~pd.isna(df['Alpha-2 code'])]
-    df['Country'] = df['Country'].str.replace('\(.*\)', '').str.replace('\[.*\]', '').str.strip()
-    items = []
-    for _, row in df.iterrows():
-        items.append(Country(name=row['Country'], code=row['Alpha-2 code']))
-    db_manager.session.add_all(items)
-    db_manager.session.commit()
-
+    def connect(self):
+        self.engine = create_engine(self.conn_string, echo=self.echo)
+        Base.metadata.create_all(self.engine)
+        self.session_maker = sessionmaker(bind=self.engine)
