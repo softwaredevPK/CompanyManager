@@ -28,6 +28,7 @@ Project is fully build with python and its open source libraries:
 ### PySide2 namespace
 Objects names refer to their text and type of widget, by use of below shortcuts:
 <br />IW - Input Widget
+<br />IV - Item View
 <br />DW - Display Widget
 <br />CT - Container
 <br />B - Buttons

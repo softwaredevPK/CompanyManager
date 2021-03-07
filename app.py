@@ -1,11 +1,13 @@
 from gui_windows.welcome_window import Ui_welcome_window
 from gui_windows.AddContractorWidget import Ui_add_contractor_QWidget
 from gui_windows.start_window import Ui_StartWindow
+from gui_windows.products_widget import Ui_product_widget
 from PySide2 import QtCore, QtGui, QtWidgets
-from orm import Customer, Supplier
+from orm import Customer, Supplier, Product
 from db_manager import db_manager
 from functools import partial
 from utilities import show_msg_box, MessageError
+import PySide2
 
 
 class WelcomeWindow(QtWidgets.QMainWindow):
@@ -85,7 +87,8 @@ class StartWindow(QtWidgets.QMainWindow):
         add_cust.exec_()
 
     def my_products(self):
-        ...
+        product_wg = ProductWidget()
+        product_wg.exec_()
 
 
 class AddCustomer(QtWidgets.QDialog):
@@ -396,3 +399,54 @@ class EditCompany(AddCompany):
             db_manager.session.commit()
             self.accept()
 
+
+class ProductWidget(QtWidgets.QDialog):
+
+    def __init__(self):
+        super().__init__()
+        self.ui = Ui_product_widget()
+        self.ui.setupUi(self)
+        self.model = ProductModel()
+        self._connect()
+
+    def _connect(self):
+        self.ui.Products_IV.setModel(self.model)
+        self.ui.add_B.clicked.connect(self.add)
+
+    def add(self):
+        self.edit_product()
+        product = Product(name=self.ui.product_name_IW.text())
+        db_manager.session.add(product)
+        db_manager.session.commit()
+        self.model.refresh()
+
+    def edit_product(self):
+        text, ok = QtWidgets.QInputDialog.getText(self, 'Product', 'Please change current product name.', text=str())
+        if ok:
+            ...
+
+
+class ProductModel(QtCore.QAbstractTableModel):
+
+    def __init__(self):
+        super().__init__()
+        self.products = db_manager.get_all_products()
+
+    def rowCount(self, parent):
+        return len(self.products)
+
+    def columnCount(self, parent):
+        return 1
+        # return len(self.products.cols())
+
+    def data(self, index, role=QtCore.Qt.DisplayRole):
+        if role == QtCore.Qt.DisplayRole:
+            row = index.row()
+            col = index.column()
+            return self.products[row][col]
+
+    def headerData(self, section:int, orientation:PySide2.QtCore.Qt.Orientation, role:int=...):
+        return 'name'
+
+    def refresh(self):
+        self.products = db_manager.get_all_products()

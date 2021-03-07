@@ -46,8 +46,13 @@ class Product(Base):
     __tablename__ = 'products'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    supplier_id = Column(Integer, ForeignKey('suppliers.id'))
     name = Column(String)
+
+    def cols(self):
+        return [self.name]
+
+    def __getitem__(self, item):
+        return self.cols()[item]
 
 
 class PriceTable(Base):
@@ -81,7 +86,7 @@ class Country(Base):
     name = Column(String)
     code = Column(String(2), primary_key=True)
 
-# todo SIngleTOn to rethink - rebuild
+
 class DataAccessLayer(SingleInstanceClass):
     """Class to manage access to DB"""
 
