@@ -2,8 +2,9 @@ from gui_windows.welcome_window import Ui_welcome_window
 from gui_windows.AddContractorWidget import Ui_add_contractor_QWidget
 from gui_windows.start_window import Ui_StartWindow
 from gui_windows.products_widget import Ui_product_widget
+from gui_windows.edit_product_widget import Ui_edit_product
 from PySide2 import QtCore, QtGui, QtWidgets
-from orm import Customer, Supplier, Product
+from orm import Customer, Supplier, Product, Category
 from db_manager import db_manager
 from functools import partial
 from utilities import show_msg_box, MessageError
@@ -407,23 +408,65 @@ class ProductWidget(QtWidgets.QDialog):
         self.ui = Ui_product_widget()
         self.ui.setupUi(self)
         self.model = ProductModel()
+        self.categories = db_manager.get_categories()
         self._connect()
 
     def _connect(self):
         self.ui.Products_IV.setModel(self.model)
         self.ui.add_B.clicked.connect(self.add)
+        self.ui.edit_B.clicked.connect(self.edit_product)
+        self.ui.delete_B.clicked.connect(self.delete_product)
+        self.ui.add_new_category_B.clicked.connect(self.add_category)
+
+        # setting sorting
+        # proxy_model = QtCore.QSortFilterProxyModel()
+        # proxy_model.setSourceModel(self.model)
+        # self.ui.Products_IV.setModel(proxy_model)
+
+        self.ui.category_IW.addItems(self.categories)
+
+    def get_selected_row(self):
+        selected_indexes = {i.row() for i in self.ui.Products_IV.selectionModel().selectedIndexes()}
+        if len(selected_indexes) == 1:
+            return list(selected_indexes)[0]
+        else:
+            return None  # expected single selection mode
 
     def add(self):
-        self.edit_product()
-        product = Product(name=self.ui.product_name_IW.text())
+        product = Product(name=self.ui.product_name_IW.text(), category=self.ui.category_IW.currentText())
         db_manager.session.add(product)
         db_manager.session.commit()
-        self.model.refresh()
+        self.model.add_product(product)
 
     def edit_product(self):
-        text, ok = QtWidgets.QInputDialog.getText(self, 'Product', 'Please change current product name.', text=str())
-        if ok:
-            ...
+        selected_row = self.get_selected_row()
+        if selected_row is None:
+            return
+        product = self.model.get_product(selected_row)
+        edit_widget = EditProductWidget(product.name)
+        if edit_widget.exec_():
+            product.name = edit_widget.new_name()
+            product.category = edit_widget.new_category()
+            db_manager.session.commit()
+
+    def delete_product(self):
+        selected_row = self.get_selected_row()
+        if selected_row is None:
+            return
+        product = self.model.get_product(selected_row)
+        db_manager.session.delete(product)
+        db_manager.session.commit()
+        self.model.delete_product(selected_row)
+
+    def add_category(self):
+        category_name, ok = QtWidgets.QInputDialog.getText(self, 'Category', 'Please add new category.')
+        if not ok:
+            return
+        if not db_manager.category_exist(category_name):
+            category = Category(name=category_name)
+            db_manager.session.add(category)
+            db_manager.session.commit()
+            self.ui.category_IW.addItem(category_name)
 
 
 class ProductModel(QtCore.QAbstractTableModel):
@@ -436,8 +479,7 @@ class ProductModel(QtCore.QAbstractTableModel):
         return len(self.products)
 
     def columnCount(self, parent):
-        return 1
-        # return len(self.products.cols())
+        return len(Product.cols())
 
     def data(self, index, role=QtCore.Qt.DisplayRole):
         if role == QtCore.Qt.DisplayRole:
@@ -446,7 +488,51 @@ class ProductModel(QtCore.QAbstractTableModel):
             return self.products[row][col]
 
     def headerData(self, section:int, orientation:PySide2.QtCore.Qt.Orientation, role:int=...):
-        return 'name'
+        if role == QtCore.Qt.DisplayRole:
+            if orientation == QtCore.Qt.Horizontal:
+                return Product.cols()[section]
+            elif orientation == QtCore.Qt.Vertical:
+                return section
 
-    def refresh(self):
-        self.products = db_manager.get_all_products()
+    # Below method edit list of objects stored in model, do not touch DB
+
+    def add_product(self, product: Product):
+        self.layoutAboutToBeChanged.emit()
+        self.products.append(product)
+        self.layoutChanged.emit()
+
+    def get_product(self, index):
+        return self.products[index]
+
+    def delete_product(self, index):
+        self.layoutAboutToBeChanged.emit()
+        self.products = self.products[:index] + self.products[index + 1:]
+        self.layoutChanged.emit()
+
+    def sort(self, column:int, order:PySide2.QtCore.Qt.SortOrder=...):
+        self.layoutAboutToBeChanged.emit()
+        if order == PySide2.QtCore.Qt.SortOrder.AscendingOrder:
+            self.products.sort(key=lambda x: x[column], reverse=False)
+        else:
+            self.products.sort(key=lambda x: x[column], reverse=True)
+        self.layoutChanged.emit()
+
+
+class EditProductWidget(QtWidgets.QDialog):
+    def __init__(self, curr_name):
+        super().__init__()
+        self.ui = Ui_edit_product()
+        self.ui.setupUi(self)
+        self.ui.category_IW.addItems(db_manager.get_categories())
+        self.ui.product_name_IW.setText(curr_name)
+        self._connect()
+
+    def _connect(self):
+        self.ui.ok_cancel_B.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(self.accept)
+        self.ui.ok_cancel_B.button(QtWidgets.QDialogButtonBox.Cancel).clicked.connect(self.reject)
+
+    def new_name(self):
+        return self.ui.product_name_IW.text()
+
+    def new_category(self):
+        return self.ui.category_IW.currentText()

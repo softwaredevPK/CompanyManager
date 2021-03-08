@@ -3,7 +3,7 @@ from pathlib import Path
 import pandas as pd
 from sqlalchemy import literal
 
-from orm import Supplier, Country, Customer, DataAccessLayer, Product
+from orm import Supplier, Country, Customer, DataAccessLayer, Product, Category
 
 
 class DBManager:
@@ -65,6 +65,14 @@ class DBManager:
 
     def get_all_products(self):
         return self.session.query(Product).all()
+
+    def get_categories(self):
+        return [i[0] for i in self.session.query(Category.name).all()]
+
+    def category_exist(self, category_name):
+        q = self.session.query(Category).filter(Category.name == category_name)
+        return self.session.query(literal(True)).filter(q.exists()).scalar()
+
 
 db_manager = DBManager()
 

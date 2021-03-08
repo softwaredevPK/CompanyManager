@@ -47,12 +47,25 @@ class Product(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String)
+    category = Column(String, ForeignKey('categories.name'))
 
-    def cols(self):
-        return [self.name]
+    @staticmethod
+    def cols():
+        cols = Product.__table__.columns.keys()
+        cols.remove('id')
+        return cols
+
+    def __values(self):
+        return [self.name, self.category]
 
     def __getitem__(self, item):
-        return self.cols()[item]
+        return self.__values()[item]
+
+
+class Category(Base):
+    __tablename__ = 'categories'
+
+    name = Column(String, primary_key=True, autoincrement=False)
 
 
 class PriceTable(Base):
