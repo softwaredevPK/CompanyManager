@@ -3,8 +3,9 @@ from gui_windows.AddContractorWidget import Ui_add_contractor_QWidget
 from gui_windows.start_window import Ui_StartWindow
 from gui_windows.products_widget import Ui_product_widget
 from gui_windows.edit_product_widget import Ui_edit_product
+from gui_windows.price_tables_widget import Ui_price_table_widget
 from PySide2 import QtCore, QtGui, QtWidgets
-from orm import Customer, Supplier, Product, Category
+from orm import Customer, Supplier, Product, Category, PriceTable
 from db_manager import db_manager
 from functools import partial
 from utilities import show_msg_box, MessageError
@@ -70,6 +71,7 @@ class StartWindow(QtWidgets.QMainWindow):
         self.ui.add_customer_B.clicked.connect(self.add_customer)
         self.ui.edit_customer_B.clicked.connect(self.edit_customer)
         self.ui.my_procust_B.clicked.connect(self.my_products)
+        self.ui.price_lists_B.clicked.connect(self.price_lists)
 
     def edit_customer(self):
         items = db_manager.get_customers_names()
@@ -90,6 +92,11 @@ class StartWindow(QtWidgets.QMainWindow):
     def my_products(self):
         product_wg = ProductWidget()
         product_wg.exec_()
+
+    def price_lists(self):
+        price_table = PriceTableWidget()
+        if price_table.runnable():
+            price_table.exec_()
 
 
 class AddCustomer(QtWidgets.QDialog):
@@ -418,11 +425,6 @@ class ProductWidget(QtWidgets.QDialog):
         self.ui.delete_B.clicked.connect(self.delete_product)
         self.ui.add_new_category_B.clicked.connect(self.add_category)
 
-        # setting sorting
-        # proxy_model = QtCore.QSortFilterProxyModel()
-        # proxy_model.setSourceModel(self.model)
-        # self.ui.Products_IV.setModel(proxy_model)
-
         self.ui.category_IW.addItems(self.categories)
 
     def get_selected_row(self):
@@ -536,3 +538,104 @@ class EditProductWidget(QtWidgets.QDialog):
 
     def new_category(self):
         return self.ui.category_IW.currentText()
+
+
+class PriceTableWidget(QtWidgets.QDialog):
+
+    def __init__(self):
+        super().__init__()
+        self.ui = Ui_price_table_widget()
+        self.ui.setupUi(self)
+        self.customer_id = None
+        self.model = PriceTableModel()
+        self.products = db_manager.get_all_products()
+        self._connect()
+
+    # todo Price only as float!!!
+    def _connect(self):
+        self.ui.table_IV.setModel(self.model)
+        self.ui.add_B.clicked.connect(self.add)
+        # self.ui.delete_B.clicked.connect(self.delete)
+
+        self.ui.product_IW.addItems(self.products)
+        for i, product in enumerate(self.products):
+            self.ui.product_IW.setItemText(i, product.name)
+
+    def runnable(self):
+        self.set_customer_id()
+        if self.customer_id is None:
+            return False
+        else:
+            self.refresh_model()
+            return True
+
+    def set_customer_id(self):
+        customers = db_manager.get_customers_names()
+        if len(customers) == 0:
+            show_msg_box("Missing customers")
+            return
+        customer_name, ok = QtWidgets.QInputDialog.getItem(self, 'Customer', 'Please choose customer to show price-list.', customers, 0, False)
+        if ok:
+            self.customer_id = db_manager.get_customer_id(customer_name=customer_name)
+        return
+
+    def refresh_model(self):
+        self.model.download_price_table(self.customer_id)
+
+    def add(self):
+        # todo check if such price_table exists(avoid error)
+        product_index = self.ui.product_IW.currentIndex()
+        product = self.products[product_index]
+        price_table = PriceTable(product_id=product.id, customer_id=self.customer_id, price=self.ui.price_IW.text())
+        db_manager.session.add(price_table)
+        db_manager.session.commit()
+        self.model.add_price_table(price_table)
+
+
+class PriceTableModel(QtCore.QAbstractTableModel):
+
+    def __init__(self):
+        super().__init__()
+        self.price_tables = []
+
+    def rowCount(self, parent):
+        return len(self.price_tables)
+
+    def columnCount(self, parent):
+        return len(PriceTable.cols())
+
+    def data(self, index, role=QtCore.Qt.DisplayRole):
+        if role == QtCore.Qt.DisplayRole:
+            row = index.row()
+            col = index.column()
+            return self.price_tables[row][col]
+
+    def headerData(self, section: int, orientation: PySide2.QtCore.Qt.Orientation, role: int = ...):
+        if role == QtCore.Qt.DisplayRole:
+            if orientation == QtCore.Qt.Horizontal:
+                return PriceTable.cols()[section]
+            elif orientation == QtCore.Qt.Vertical:
+                return section
+
+    def setData(self, index, value, role):
+        # todo check if value is float! allow only floats to write
+        # https://www.qtcentre.org/threads/70704-qtablewidget-edit-only-numbers
+        if role == QtCore.Qt.EditRole:
+            if index.column() == 1:
+                self.price_tables[index.row()][index.column()] = value
+
+    def flags(self, index:PySide2.QtCore.QModelIndex) -> PySide2.QtCore.Qt.ItemFlags:
+        if index.column() == 1:
+            return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable
+        else:
+            return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+
+    # other methods
+
+    def download_price_table(self, customer_id):
+        self.price_tables = db_manager.get_price_table(customer_id)
+
+    def add_price_table(self, price_table):
+        self.layoutAboutToBeChanged.emit()
+        self.price_tables.append(price_table)
+        self.layoutChanged.emit()

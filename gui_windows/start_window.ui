@@ -36,6 +36,13 @@
       </property>
      </widget>
     </item>
+    <item>
+     <widget class="QPushButton" name="price_lists_B">
+      <property name="text">
+       <string>Price-lists</string>
+      </property>
+     </widget>
+    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">

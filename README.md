@@ -19,11 +19,11 @@ To build GUI Qt Designer was used as part of PySide2 library.
 
 ## Technologies
 
-Project is fully build with python and its open source libraries:
+Project is fully build with python (ver 3.8) and its open source libraries:
 
-- **sqlalchemy**- to manage DataBase
-- **PySide2**- to build GUI
-- **pandas** - to deal with .csv files
+- **sqlalchemy==1.3.23** - to manage DataBase
+- **PySide2==5.15.1** - to build GUI
+- **pandas==1.1.2** - to deal with .csv files
 
 ### PySide2 namespace
 Objects names refer to their text and type of widget, by use of below shortcuts:

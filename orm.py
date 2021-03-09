@@ -1,5 +1,5 @@
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import column_property, sessionmaker
+from sqlalchemy.orm import column_property, sessionmaker, relationship
 from sqlalchemy import Column, Integer, String, Float, Date, Boolean
 from sqlalchemy import ForeignKey, UniqueConstraint, create_engine
 
@@ -74,6 +74,24 @@ class PriceTable(Base):
     product_id = Column(Integer, ForeignKey('products.id'), primary_key=True)
     customer_id = Column(Integer, ForeignKey('customers.id'), primary_key=True)
     price = Column(Float)
+
+    product = relationship('Product', lazy='joined')
+
+    @staticmethod
+    def cols():
+        return ['product_name', 'price']
+
+    def __values(self):
+        return [self.product.name, self.price]
+
+    def __getitem__(self, item):
+        return self.__values()[item]
+
+    def __setitem__(self, key, value):
+        if key == 1:
+            self.price = value
+        else:
+            raise KeyError("Setter accept only 1 as key")
 
 
 class Order(Base):

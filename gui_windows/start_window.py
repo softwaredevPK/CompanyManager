@@ -37,6 +37,11 @@ class Ui_StartWindow(object):
 
         self.verticalLayout.addWidget(self.my_procust_B)
 
+        self.price_lists_B = QPushButton(self.centralwidget)
+        self.price_lists_B.setObjectName(u"price_lists_B")
+
+        self.verticalLayout.addWidget(self.price_lists_B)
+
         StartWindow.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(StartWindow)
         self.menubar.setObjectName(u"menubar")
@@ -56,5 +61,6 @@ class Ui_StartWindow(object):
         self.add_customer_B.setText(QCoreApplication.translate("StartWindow", u"Add Customer", None))
         self.edit_customer_B.setText(QCoreApplication.translate("StartWindow", u"Edit Customer", None))
         self.my_procust_B.setText(QCoreApplication.translate("StartWindow", u"My Products", None))
+        self.price_lists_B.setText(QCoreApplication.translate("StartWindow", u"Price-lists", None))
     # retranslateUi
 
