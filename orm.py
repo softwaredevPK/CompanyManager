@@ -1,7 +1,9 @@
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import column_property, sessionmaker, relationship
 from sqlalchemy import Column, Integer, String, Float, Date, Boolean
 from sqlalchemy import ForeignKey, UniqueConstraint, create_engine
+from math import fsum
 
 from utilities import SingleInstanceClass
 
@@ -79,10 +81,10 @@ class PriceTable(Base):
 
     @staticmethod
     def cols():
-        return ['product_name', 'price']
+        return ['product_name', 'price', 'category']
 
     def __values(self):
-        return [self.product.name, self.price]
+        return [self.product.name, self.price, self.product.category]
 
     def __getitem__(self, item):
         return self.__values()[item]
@@ -107,8 +109,10 @@ class OrderDetail(Base):
     __tablename__ = 'orders_details'
 
     order_id = Column(Integer, ForeignKey('orders.id'), primary_key=True)
-    product_id = Column(Integer, ForeignKey('products.id'))
+    product_id = Column(Integer, ForeignKey('price_tables.product_id'), primary_key=True)
     quantity = Column(Integer)
+    unit_price = Column(Float)
+    total_price = column_property(quantity * unit_price)
 
 
 class Country(Base):
@@ -132,3 +136,6 @@ class DataAccessLayer(SingleInstanceClass):
         self.engine = create_engine(self.conn_string, echo=self.echo)
         Base.metadata.create_all(self.engine)
         self.session_maker = sessionmaker(bind=self.engine)
+
+
+# todo model should be updated. I want to have possibility to keep old price, working now, but also possibility to delete Product without deleting it from order details

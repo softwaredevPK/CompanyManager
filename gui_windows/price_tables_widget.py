@@ -22,21 +22,24 @@ class Ui_price_table_widget(object):
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.gridLayout = QGridLayout()
         self.gridLayout.setObjectName(u"gridLayout")
+        self.horizontalSpacer_2 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        self.gridLayout.addItem(self.horizontalSpacer_2, 0, 3, 2, 1)
+
+        self.product_DW = QLabel(price_table_widget)
+        self.product_DW.setObjectName(u"product_DW")
+
+        self.gridLayout.addWidget(self.product_DW, 0, 0, 1, 1)
+
         self.price_DW = QLabel(price_table_widget)
         self.price_DW.setObjectName(u"price_DW")
 
-        self.gridLayout.addWidget(self.price_DW, 0, 1, 1, 1)
-
-        self.price_IW = QLineEdit(price_table_widget)
-        self.price_IW.setObjectName(u"price_IW")
-        self.price_IW.setMaximumSize(QSize(120, 16777215))
-
-        self.gridLayout.addWidget(self.price_IW, 1, 1, 1, 1)
+        self.gridLayout.addWidget(self.price_DW, 0, 2, 1, 1)
 
         self.add_B = QPushButton(price_table_widget)
         self.add_B.setObjectName(u"add_B")
 
-        self.gridLayout.addWidget(self.add_B, 0, 3, 2, 1)
+        self.gridLayout.addWidget(self.add_B, 0, 4, 2, 1)
 
         self.product_IW = QComboBox(price_table_widget)
         self.product_IW.setObjectName(u"product_IW")
@@ -44,20 +47,31 @@ class Ui_price_table_widget(object):
 
         self.gridLayout.addWidget(self.product_IW, 1, 0, 1, 1)
 
-        self.product_DW = QLabel(price_table_widget)
-        self.product_DW.setObjectName(u"product_DW")
+        self.price_IW = QLineEdit(price_table_widget)
+        self.price_IW.setObjectName(u"price_IW")
+        self.price_IW.setMaximumSize(QSize(120, 16777215))
 
-        self.gridLayout.addWidget(self.product_DW, 0, 0, 1, 1)
+        self.gridLayout.addWidget(self.price_IW, 1, 2, 1, 1)
 
-        self.horizontalSpacer_2 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.category_DW = QLabel(price_table_widget)
+        self.category_DW.setObjectName(u"category_DW")
 
-        self.gridLayout.addItem(self.horizontalSpacer_2, 0, 2, 2, 1)
+        self.gridLayout.addWidget(self.category_DW, 0, 1, 1, 1)
+
+        self.category_IW = QLineEdit(price_table_widget)
+        self.category_IW.setObjectName(u"category_IW")
+        self.category_IW.setEnabled(True)
+        self.category_IW.setReadOnly(True)
+
+        self.gridLayout.addWidget(self.category_IW, 1, 1, 1, 1)
 
 
         self.verticalLayout.addLayout(self.gridLayout)
 
         self.table_IV = QTableView(price_table_widget)
         self.table_IV.setObjectName(u"table_IV")
+        self.table_IV.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.table_IV.setSelectionBehavior(QAbstractItemView.SelectRows)
 
         self.verticalLayout.addWidget(self.table_IV)
 
@@ -83,9 +97,10 @@ class Ui_price_table_widget(object):
 
     def retranslateUi(self, price_table_widget):
         price_table_widget.setWindowTitle(QCoreApplication.translate("price_table_widget", u"Form", None))
+        self.product_DW.setText(QCoreApplication.translate("price_table_widget", u"Product", None))
         self.price_DW.setText(QCoreApplication.translate("price_table_widget", u"Price", None))
         self.add_B.setText(QCoreApplication.translate("price_table_widget", u"Add", None))
-        self.product_DW.setText(QCoreApplication.translate("price_table_widget", u"Product", None))
+        self.category_DW.setText(QCoreApplication.translate("price_table_widget", u"Category", None))
         self.delete_B.setText(QCoreApplication.translate("price_table_widget", u"Delete", None))
     # retranslateUi
 

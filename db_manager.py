@@ -87,6 +87,10 @@ class DBManager:
     def get_all_products_names(self):
         return [i[0] for i in self.session.query(Product.name).all()]
 
+    def product_in_price_table_exists(self, product_id, customer_id):
+        q = self.session.query(PriceTable).filter(PriceTable.product_id == product_id, PriceTable.customer_id == customer_id)
+        return self.session.query(literal(True)).filter(q.exists()).scalar()
+
 
 db_manager = DBManager()
 

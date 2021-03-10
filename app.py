@@ -10,6 +10,18 @@ from db_manager import db_manager
 from functools import partial
 from utilities import show_msg_box, MessageError
 import PySide2
+import re
+
+
+class SelectedRowMixin:
+
+    @staticmethod
+    def get_selected_row(selectable_widget):
+        selected_indexes = {i.row() for i in selectable_widget.selectionModel().selectedIndexes()}
+        if len(selected_indexes) == 1:
+            return list(selected_indexes)[0]
+        else:
+            return None  # expected single selection mode
 
 
 class WelcomeWindow(QtWidgets.QMainWindow):
@@ -408,7 +420,7 @@ class EditCompany(AddCompany):
             self.accept()
 
 
-class ProductWidget(QtWidgets.QDialog):
+class ProductWidget(QtWidgets.QDialog, SelectedRowMixin):
 
     def __init__(self):
         super().__init__()
@@ -427,13 +439,6 @@ class ProductWidget(QtWidgets.QDialog):
 
         self.ui.category_IW.addItems(self.categories)
 
-    def get_selected_row(self):
-        selected_indexes = {i.row() for i in self.ui.Products_IV.selectionModel().selectedIndexes()}
-        if len(selected_indexes) == 1:
-            return list(selected_indexes)[0]
-        else:
-            return None  # expected single selection mode
-
     def add(self):
         product = Product(name=self.ui.product_name_IW.text(), category=self.ui.category_IW.currentText())
         db_manager.session.add(product)
@@ -441,7 +446,7 @@ class ProductWidget(QtWidgets.QDialog):
         self.model.add_product(product)
 
     def edit_product(self):
-        selected_row = self.get_selected_row()
+        selected_row = self.get_selected_row(self.ui.Products_IV)
         if selected_row is None:
             return
         product = self.model.get_product(selected_row)
@@ -452,13 +457,15 @@ class ProductWidget(QtWidgets.QDialog):
             db_manager.session.commit()
 
     def delete_product(self):
-        selected_row = self.get_selected_row()
+        selected_row = self.get_selected_row(self.ui.Products_IV)
         if selected_row is None:
             return
         product = self.model.get_product(selected_row)
         db_manager.session.delete(product)
         db_manager.session.commit()
         self.model.delete_product(selected_row)
+        # todo all objects from PriceTable should be deleted also, because of Foreign key. Records shouldn't be deleted from order_details
+        # todo All other objects related to it need to be deleted, warning here with "Do you want to proceed": Product + order_detail hmmm
 
     def add_category(self):
         category_name, ok = QtWidgets.QInputDialog.getText(self, 'Category', 'Please add new category.')
@@ -489,7 +496,7 @@ class ProductModel(QtCore.QAbstractTableModel):
             col = index.column()
             return self.products[row][col]
 
-    def headerData(self, section:int, orientation:PySide2.QtCore.Qt.Orientation, role:int=...):
+    def headerData(self, section: int, orientation: PySide2.QtCore.Qt.Orientation, role: int=...):
         if role == QtCore.Qt.DisplayRole:
             if orientation == QtCore.Qt.Horizontal:
                 return Product.cols()[section]
@@ -508,7 +515,7 @@ class ProductModel(QtCore.QAbstractTableModel):
 
     def delete_product(self, index):
         self.layoutAboutToBeChanged.emit()
-        self.products = self.products[:index] + self.products[index + 1:]
+        self.products.pop(index)
         self.layoutChanged.emit()
 
     def sort(self, column:int, order:PySide2.QtCore.Qt.SortOrder=...):
@@ -540,7 +547,20 @@ class EditProductWidget(QtWidgets.QDialog):
         return self.ui.category_IW.currentText()
 
 
-class PriceTableWidget(QtWidgets.QDialog):
+class PriceTableWidget(QtWidgets.QDialog, SelectedRowMixin):
+
+    class ValidatedItemDelegate(QtWidgets.QStyledItemDelegate):
+        """https://stackoverflow.com/questions/13449971/pyside-pyqt4-how-to-set-a-validator-when-editing-a-cell-in-a-qtableview/13449972#13449972"""
+
+        def createEditor(self, parent, option, index):
+            if not index.isValid():
+                return 0
+            if index.column() == 1:  # price column
+                editor = QtWidgets.QLineEdit(parent)
+                validator = QtGui.QRegExpValidator("([0-9]+[.])?[0-9]+", editor)
+                editor.setValidator(validator)
+                return editor
+            return super().createEditor(parent, option, index)
 
     def __init__(self):
         super().__init__()
@@ -551,15 +571,26 @@ class PriceTableWidget(QtWidgets.QDialog):
         self.products = db_manager.get_all_products()
         self._connect()
 
-    # todo Price only as float!!!
     def _connect(self):
         self.ui.table_IV.setModel(self.model)
         self.ui.add_B.clicked.connect(self.add)
-        # self.ui.delete_B.clicked.connect(self.delete)
+        self.ui.delete_B.clicked.connect(self.delete)
 
         self.ui.product_IW.addItems(self.products)
         for i, product in enumerate(self.products):
             self.ui.product_IW.setItemText(i, product.name)
+
+        # connect signal to refresh category of chosen product
+        self.ui.product_IW.currentTextChanged.connect(self.update_category)
+
+        # set current category
+        product_index = self.ui.product_IW.currentIndex()
+        product = self.products[product_index]
+        self.ui.category_IW.setText(product.category)
+
+        # RegexValidator on column 1 with prices
+        self.ui.price_IW.setValidator(QtGui.QRegExpValidator("([0-9]+[.])?[0-9]+", self.ui.price_IW))
+        self.ui.table_IV.setItemDelegate(self.ValidatedItemDelegate())
 
     def runnable(self):
         self.set_customer_id()
@@ -582,14 +613,31 @@ class PriceTableWidget(QtWidgets.QDialog):
     def refresh_model(self):
         self.model.download_price_table(self.customer_id)
 
-    def add(self):
-        # todo check if such price_table exists(avoid error)
+    def update_category(self):
         product_index = self.ui.product_IW.currentIndex()
         product = self.products[product_index]
-        price_table = PriceTable(product_id=product.id, customer_id=self.customer_id, price=self.ui.price_IW.text())
+        self.ui.category_IW.setText(product.category)
+
+    def add(self):
+        product_index = self.ui.product_IW.currentIndex()
+        product = self.products[product_index]
+        if db_manager.product_in_price_table_exists(product.id, self.customer_id):
+            return
+        price = self.ui.price_IW.text()
+        price_table = PriceTable(product_id=product.id, customer_id=self.customer_id, price=0 if price == '' else float(price))
         db_manager.session.add(price_table)
         db_manager.session.commit()
         self.model.add_price_table(price_table)
+
+    def delete(self):
+        selected_row = self.get_selected_row(self.ui.table_IV)
+        if selected_row is None:
+            return
+        product = self.model.get_price_table(selected_row)
+        db_manager.session.delete(product)
+        db_manager.session.commit()
+        self.model.delete_price_table(selected_row)
+        # todo have impact on OrdersDetails
 
 
 class PriceTableModel(QtCore.QAbstractTableModel):
@@ -618,8 +666,6 @@ class PriceTableModel(QtCore.QAbstractTableModel):
                 return section
 
     def setData(self, index, value, role):
-        # todo check if value is float! allow only floats to write
-        # https://www.qtcentre.org/threads/70704-qtablewidget-edit-only-numbers
         if role == QtCore.Qt.EditRole:
             if index.column() == 1:
                 self.price_tables[index.row()][index.column()] = value
@@ -638,4 +684,12 @@ class PriceTableModel(QtCore.QAbstractTableModel):
     def add_price_table(self, price_table):
         self.layoutAboutToBeChanged.emit()
         self.price_tables.append(price_table)
+        self.layoutChanged.emit()
+
+    def get_price_table(self, index):
+        return self.price_tables[index]
+
+    def delete_price_table(self, index):
+        self.layoutAboutToBeChanged.emit()
+        self.price_tables.pop(index)
         self.layoutChanged.emit()
