@@ -50,15 +50,16 @@ class Product(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String)
     category = Column(String, ForeignKey('categories.name'))
+    active = Column(Boolean, default=True)
+
+    __table_args__ = (UniqueConstraint(name, category, name='name_category'),)
 
     @staticmethod
     def cols():
-        cols = Product.__table__.columns.keys()
-        cols.remove('id')
-        return cols
+        return ['name', 'category', 'status']
 
     def __values(self):
-        return [self.name, self.category]
+        return [self.name, self.category,  'active' if self.active else 'inactive']
 
     def __getitem__(self, item):
         return self.__values()[item]
@@ -76,21 +77,26 @@ class PriceTable(Base):
     product_id = Column(Integer, ForeignKey('products.id'), primary_key=True)
     customer_id = Column(Integer, ForeignKey('customers.id'), primary_key=True)
     price = Column(Float)
+    active = Column(Boolean, default=True)
 
     product = relationship('Product', lazy='joined')
 
     @staticmethod
     def cols():
-        return ['product_name', 'price', 'category']
+        return ['product_name', 'price', 'category', 'status']
+
+    @staticmethod
+    def get_price_key():
+        return PriceTable.cols().index('price')
 
     def __values(self):
-        return [self.product.name, self.price, self.product.category]
+        return [self.product.name, self.price, self.product.category, 'active' if self.active else 'inactive']
 
     def __getitem__(self, item):
         return self.__values()[item]
 
     def __setitem__(self, key, value):
-        if key == 1:
+        if key == self.get_price_key():
             self.price = value
         else:
             raise KeyError("Setter accept only 1 as key")
@@ -136,6 +142,3 @@ class DataAccessLayer(SingleInstanceClass):
         self.engine = create_engine(self.conn_string, echo=self.echo)
         Base.metadata.create_all(self.engine)
         self.session_maker = sessionmaker(bind=self.engine)
-
-
-# todo model should be updated. I want to have possibility to keep old price, working now, but also possibility to delete Product without deleting it from order details

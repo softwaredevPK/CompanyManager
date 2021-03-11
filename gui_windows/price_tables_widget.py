@@ -81,10 +81,10 @@ class Ui_price_table_widget(object):
 
         self.horizontalLayout.addItem(self.horizontalSpacer)
 
-        self.delete_B = QPushButton(price_table_widget)
-        self.delete_B.setObjectName(u"delete_B")
+        self.change_status_B = QPushButton(price_table_widget)
+        self.change_status_B.setObjectName(u"change_status_B")
 
-        self.horizontalLayout.addWidget(self.delete_B)
+        self.horizontalLayout.addWidget(self.change_status_B)
 
 
         self.verticalLayout.addLayout(self.horizontalLayout)
@@ -101,6 +101,6 @@ class Ui_price_table_widget(object):
         self.price_DW.setText(QCoreApplication.translate("price_table_widget", u"Price", None))
         self.add_B.setText(QCoreApplication.translate("price_table_widget", u"Add", None))
         self.category_DW.setText(QCoreApplication.translate("price_table_widget", u"Category", None))
-        self.delete_B.setText(QCoreApplication.translate("price_table_widget", u"Delete", None))
+        self.change_status_B.setText(QCoreApplication.translate("price_table_widget", u"Change status", None))
     # retranslateUi
 

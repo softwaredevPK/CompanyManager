@@ -115,9 +115,9 @@
       </spacer>
      </item>
      <item>
-      <widget class="QPushButton" name="delete_B">
+      <widget class="QPushButton" name="change_status_B">
        <property name="text">
-        <string>Delete</string>
+        <string>Change status</string>
        </property>
       </widget>
      </item>
