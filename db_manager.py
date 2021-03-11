@@ -91,6 +91,9 @@ class DBManager:
         q = self.session.query(PriceTable).filter(PriceTable.product_id == product_id, PriceTable.customer_id == customer_id)
         return self.session.query(literal(True)).filter(q.exists()).scalar()
 
+    def check_product_name_category_constraint(self, name, category):
+        q = self.session.query(Product).filter(Product.name == name, Product.category == category)
+        return self.session.query(literal(True)).filter(q.exists()).scalar()
 
 db_manager = DBManager()
 

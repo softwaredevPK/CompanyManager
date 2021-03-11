@@ -12,7 +12,7 @@ from utilities import show_msg_box, MessageError
 import PySide2
 import re
 
-
+# TODO IDEA: instead of self.ui.long_name_IW.text().strip(), maybe create properties which return it
 class SelectedRowMixin:
 
     @staticmethod
@@ -212,11 +212,11 @@ class AddCustomer(QtWidgets.QDialog):
 
         for field in fields_to_check:
             if hasattr(field, 'currentText'):
-                if field.currentText() == '--Select Country--':
+                if field.currentText().strip() == '--Select Country--':
                     self.change_border_to_red(field)
                     incorrect = True
             elif hasattr(field, 'text'):
-                if field.text() == '':
+                if field.text().strip() == '':
                     self.change_border_to_red(field)
                     incorrect = True
 
@@ -245,24 +245,24 @@ class AddCustomer(QtWidgets.QDialog):
         """Method for add button to being run when is clicked"""
         if self.req_fields_filled():
             if self.ui.company_B.isChecked():
-                record = Customer(full_name=self.ui.long_name_IW.text(),
-                                  name=self.ui.short_name_IW.text(),
-                                  address=self.ui.address_IW.text(),
-                                  country=self.ui.country_IW.currentText(),
-                                  tin_code=self.ui.tin_IW.text(),
-                                  zip_code=self.ui.zipe_code_IW.text(),
-                                  city=self.ui.town_IW.text(),
-                                  email=self.ui.email_IW.text(),
-                                  phone_number=self.ui.phone_number_IW.text(),
+                record = Customer(full_name=self.ui.long_name_IW.text().strip(),
+                                  name=self.ui.short_name_IW.text().strip(),
+                                  address=self.ui.address_IW.text().strip(),
+                                  country=self.ui.country_IW.currentText().strip(),
+                                  tin_code=self.ui.tin_IW.text().strip(),
+                                  zip_code=self.ui.zipe_code_IW.text().strip(),
+                                  city=self.ui.town_IW.text().strip(),
+                                  email=self.ui.email_IW.text().strip(),
+                                  phone_number=self.ui.phone_number_IW.text().strip(),
                                   is_person=False)
             elif self.ui.person_B.isChecked():
-                record = Customer(name=self.ui.first_name_IW.text() + self.ui.surname_IW.text(),
-                                  full_name=self.ui.first_name_IW.text() + self.ui.second_name_IW.text() + self.ui.surname_IW.text(),
-                                  address=self.ui.address_IW.text(),
-                                  zip_code=self.ui.zipe_code_IW.text(),
-                                  city=self.ui.town_IW.text(),
-                                  email=self.ui.email_IW.text(),
-                                  phone_number=self.ui.phone_number_IW.text(),
+                record = Customer(name=self.ui.first_name_IW.text().strip() + self.ui.surname_IW.text().strip(),
+                                  full_name=self.ui.first_name_IW.text().strip() + self.ui.second_name_IW.text().strip() + self.ui.surname_IW.text().strip(),
+                                  address=self.ui.address_IW.text().strip(),
+                                  zip_code=self.ui.zipe_code_IW.text().strip(),
+                                  city=self.ui.town_IW.text().strip(),
+                                  email=self.ui.email_IW.text().strip(),
+                                  phone_number=self.ui.phone_number_IW.text().strip(),
                                   is_person=True)
             try:
                 self.check_customer_constraints(record)
@@ -322,14 +322,14 @@ class EditCustomer(AddCustomer):
         if self.req_fields_filled():
             if self.ui.company_B.isChecked():
                 is_person = False
-                full_name = self.ui.long_name_IW.text()
-                name = self.ui.short_name_IW.text()
-                country = self.ui.country_IW.currentText()
-                tin_code = self.ui.tin_IW.text()
+                full_name = self.ui.long_name_IW.text().strip()
+                name = self.ui.short_name_IW.text().strip()
+                country = self.ui.country_IW.currentText().strip()
+                tin_code = self.ui.tin_IW.text().strip()
             elif self.ui.person_B.isChecked():
                 is_person = True
-                full_name = self.ui.first_name_IW.text() + self.ui.second_name_IW.text() + self.ui.surname_IW.text()
-                name = self.ui.first_name_IW.text() + self.ui.surname_IW.text()
+                full_name = self.ui.first_name_IW.text().strip() + self.ui.second_name_IW.text().strip() + self.ui.surname_IW.text().strip()
+                name = self.ui.first_name_IW.text().strip() + self.ui.surname_IW.text().strip()
                 country = ''
                 tin_code = ''
             try:
@@ -342,11 +342,11 @@ class EditCustomer(AddCustomer):
                 self.customer.country = country
                 self.customer.tin_code = tin_code
                 self.customer.is_person = is_person
-                self.customer.address = self.ui.address_IW.text()
-                self.customer.city = self.ui.town_IW.text()
-                self.customer.zip_code = self.ui.zipe_code_IW.text()
-                self.customer.email = self.ui.email_IW.text()
-                self.customer.phone_number = self.ui.phone_number_IW.text()
+                self.customer.address = self.ui.address_IW.text().strip()
+                self.customer.city = self.ui.town_IW.text().strip()
+                self.customer.zip_code = self.ui.zipe_code_IW.text().strip()
+                self.customer.email = self.ui.email_IW.text().strip()
+                self.customer.phone_number = self.ui.phone_number_IW.text().strip()
                 db_manager.session.commit()
                 self.accept()
 
@@ -364,15 +364,15 @@ class AddCompany(AddCustomer):
     def add(self):
         """Method for add button to being run when is clicked used only for supplier mode."""
         if self.req_fields_filled():
-            record = Supplier(full_name=self.ui.long_name_IW.text(),
-                              name=self.ui.short_name_IW.text(),
-                              address=self.ui.address_IW.text(),
-                              country=self.ui.country_IW.currentText(),
-                              tin_code=self.ui.tin_IW.text(),
-                              zip_code=self.ui.zipe_code_IW.text(),
-                              city=self.ui.town_IW.text(),
-                              email=self.ui.email_IW.text(),
-                              phone_number=self.ui.phone_number_IW.text())
+            record = Supplier(full_name=self.ui.long_name_IW.text().strip(),
+                              name=self.ui.short_name_IW.text().strip(),
+                              address=self.ui.address_IW.text().strip(),
+                              country=self.ui.country_IW.currentText().strip(),
+                              tin_code=self.ui.tin_IW.text().strip(),
+                              zip_code=self.ui.zipe_code_IW.text().strip(),
+                              city=self.ui.town_IW.text().strip(),
+                              email=self.ui.email_IW.text().strip(),
+                              phone_number=self.ui.phone_number_IW.text().strip())
             db_manager.session.add(record)
             db_manager.session.commit()
             self.accept()
@@ -407,15 +407,15 @@ class EditCompany(AddCompany):
 
     def update(self):
         if self.req_fields_filled():
-            self.company.full_name = self.ui.long_name_IW.text()
-            self.company.name = self.ui.short_name_IW.text()
-            self.company.country = self.ui.country_IW.currentText()
-            self.company.tin_code = self.ui.tin_IW.text()
-            self.company.address = self.ui.address_IW.text()
-            self.company.city = self.ui.town_IW.text()
-            self.company.zip_code = self.ui.zipe_code_IW.text()
-            self.company.email = self.ui.email_IW.text()
-            self.company.phone_number = self.ui.phone_number_IW.text()
+            self.company.full_name = self.ui.long_name_IW.text().strip()
+            self.company.name = self.ui.short_name_IW.text().strip()
+            self.company.country = self.ui.country_IW.currentText().strip()
+            self.company.tin_code = self.ui.tin_IW.text().strip()
+            self.company.address = self.ui.address_IW.text().strip()
+            self.company.city = self.ui.town_IW.text().strip()
+            self.company.zip_code = self.ui.zipe_code_IW.text().strip()
+            self.company.email = self.ui.email_IW.text().strip()
+            self.company.phone_number = self.ui.phone_number_IW.text().strip()
             db_manager.session.commit()
             self.accept()
 
@@ -434,16 +434,27 @@ class ProductWidget(QtWidgets.QDialog, SelectedRowMixin):
         self.ui.Products_IV.setModel(self.model)
         self.ui.add_B.clicked.connect(self.add)
         self.ui.edit_B.clicked.connect(self.edit_product)
-        self.ui.delete_B.clicked.connect(self.delete_product)
+        self.ui.change_status_B.clicked.connect(self.change_status)
         self.ui.add_new_category_B.clicked.connect(self.add_category)
 
         self.ui.category_IW.addItems(self.categories)
 
+    @staticmethod
+    def check_product_constraints(product):
+        """Method checks if unique fields of customer are currently in use. """
+        if db_manager.check_product_name_category_constraint(product.name, product.category):
+            raise MessageError(f'Product {product.name} in category {product.category} already exists')
+
     def add(self):
-        product = Product(name=self.ui.product_name_IW.text(), category=self.ui.category_IW.currentText())
-        db_manager.session.add(product)
-        db_manager.session.commit()
-        self.model.add_product(product)
+        product = Product(name=self.ui.product_name_IW.text().strip(), category=self.ui.category_IW.currentText().strip())
+        try:
+            self.check_product_constraints(product)
+        except MessageError as msg:
+            show_msg_box(msg)
+        else:
+            db_manager.session.add(product)
+            db_manager.session.commit()
+            self.model.add_product(product)
 
     def edit_product(self):
         selected_row = self.get_selected_row(self.ui.Products_IV)
@@ -456,16 +467,16 @@ class ProductWidget(QtWidgets.QDialog, SelectedRowMixin):
             product.category = edit_widget.new_category()
             db_manager.session.commit()
 
-    def delete_product(self):
+    def change_status(self):
         selected_row = self.get_selected_row(self.ui.Products_IV)
         if selected_row is None:
             return
         product = self.model.get_product(selected_row)
-        db_manager.session.delete(product)
+        if product.active:
+            product.active = False
+        else:
+            product.active = True
         db_manager.session.commit()
-        self.model.delete_product(selected_row)
-        # todo all objects from PriceTable should be deleted also, because of Foreign key. Records shouldn't be deleted from order_details
-        # todo All other objects related to it need to be deleted, warning here with "Do you want to proceed": Product + order_detail hmmm
 
     def add_category(self):
         category_name, ok = QtWidgets.QInputDialog.getText(self, 'Category', 'Please add new category.')
@@ -541,10 +552,10 @@ class EditProductWidget(QtWidgets.QDialog):
         self.ui.ok_cancel_B.button(QtWidgets.QDialogButtonBox.Cancel).clicked.connect(self.reject)
 
     def new_name(self):
-        return self.ui.product_name_IW.text()
+        return self.ui.product_name_IW.text().strip()
 
     def new_category(self):
-        return self.ui.category_IW.currentText()
+        return self.ui.category_IW.currentText().strip()
 
 
 class PriceTableWidget(QtWidgets.QDialog, SelectedRowMixin):
@@ -555,7 +566,7 @@ class PriceTableWidget(QtWidgets.QDialog, SelectedRowMixin):
         def createEditor(self, parent, option, index):
             if not index.isValid():
                 return 0
-            if index.column() == 1:  # price column
+            if index.column() == PriceTable.get_price_key():  # price column
                 editor = QtWidgets.QLineEdit(parent)
                 validator = QtGui.QRegExpValidator("([0-9]+[.])?[0-9]+", editor)
                 editor.setValidator(validator)
@@ -574,7 +585,7 @@ class PriceTableWidget(QtWidgets.QDialog, SelectedRowMixin):
     def _connect(self):
         self.ui.table_IV.setModel(self.model)
         self.ui.add_B.clicked.connect(self.add)
-        self.ui.delete_B.clicked.connect(self.delete)
+        self.ui.change_status_B.clicked.connect(self.change_status)
 
         self.ui.product_IW.addItems(self.products)
         for i, product in enumerate(self.products):
@@ -623,21 +634,22 @@ class PriceTableWidget(QtWidgets.QDialog, SelectedRowMixin):
         product = self.products[product_index]
         if db_manager.product_in_price_table_exists(product.id, self.customer_id):
             return
-        price = self.ui.price_IW.text()
+        price = self.ui.price_IW.text().strip()
         price_table = PriceTable(product_id=product.id, customer_id=self.customer_id, price=0 if price == '' else float(price))
         db_manager.session.add(price_table)
         db_manager.session.commit()
         self.model.add_price_table(price_table)
 
-    def delete(self):
+    def change_status(self):
         selected_row = self.get_selected_row(self.ui.table_IV)
         if selected_row is None:
             return
-        product = self.model.get_price_table(selected_row)
-        db_manager.session.delete(product)
+        price_table = self.model.get_price_table(selected_row)
+        if price_table.active:
+            price_table.active = False
+        else:
+            price_table.active = True
         db_manager.session.commit()
-        self.model.delete_price_table(selected_row)
-        # todo have impact on OrdersDetails
 
 
 class PriceTableModel(QtCore.QAbstractTableModel):
@@ -667,11 +679,11 @@ class PriceTableModel(QtCore.QAbstractTableModel):
 
     def setData(self, index, value, role):
         if role == QtCore.Qt.EditRole:
-            if index.column() == 1:
+            if index.column() == PriceTable.get_price_key():
                 self.price_tables[index.row()][index.column()] = value
 
     def flags(self, index:PySide2.QtCore.QModelIndex) -> PySide2.QtCore.Qt.ItemFlags:
-        if index.column() == 1:
+        if index.column() == PriceTable.get_price_key():
             return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable
         else:
             return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable

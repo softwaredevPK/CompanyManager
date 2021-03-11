@@ -22,6 +22,10 @@ class Ui_product_widget(object):
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.gridLayout = QGridLayout()
         self.gridLayout.setObjectName(u"gridLayout")
+        self.horizontalSpacer_2 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        self.gridLayout.addItem(self.horizontalSpacer_2, 1, 3, 2, 1)
+
         self.product_name_IW = QLineEdit(product_widget)
         self.product_name_IW.setObjectName(u"product_name_IW")
 
@@ -37,11 +41,6 @@ class Ui_product_widget(object):
 
         self.gridLayout.addWidget(self.category_DW, 1, 1, 1, 1)
 
-        self.add_new_category_B = QPushButton(product_widget)
-        self.add_new_category_B.setObjectName(u"add_new_category_B")
-
-        self.gridLayout.addWidget(self.add_new_category_B, 1, 2, 2, 1)
-
         self.category_IW = QComboBox(product_widget)
         self.category_IW.setObjectName(u"category_IW")
         self.category_IW.setMinimumSize(QSize(150, 0))
@@ -51,11 +50,12 @@ class Ui_product_widget(object):
         self.add_B = QPushButton(product_widget)
         self.add_B.setObjectName(u"add_B")
 
-        self.gridLayout.addWidget(self.add_B, 1, 4, 2, 1)
+        self.gridLayout.addWidget(self.add_B, 1, 2, 2, 1)
 
-        self.horizontalSpacer_2 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.add_new_category_B = QPushButton(product_widget)
+        self.add_new_category_B.setObjectName(u"add_new_category_B")
 
-        self.gridLayout.addItem(self.horizontalSpacer_2, 1, 3, 2, 1)
+        self.gridLayout.addWidget(self.add_new_category_B, 1, 4, 2, 1)
 
 
         self.verticalLayout.addLayout(self.gridLayout)
@@ -83,10 +83,10 @@ class Ui_product_widget(object):
 
         self.horizontalLayout.addWidget(self.edit_B)
 
-        self.delete_B = QPushButton(product_widget)
-        self.delete_B.setObjectName(u"delete_B")
+        self.change_status_B = QPushButton(product_widget)
+        self.change_status_B.setObjectName(u"change_status_B")
 
-        self.horizontalLayout.addWidget(self.delete_B)
+        self.horizontalLayout.addWidget(self.change_status_B)
 
 
         self.verticalLayout.addLayout(self.horizontalLayout)
@@ -101,9 +101,9 @@ class Ui_product_widget(object):
         product_widget.setWindowTitle(QCoreApplication.translate("product_widget", u"Form", None))
         self.product_name_DW.setText(QCoreApplication.translate("product_widget", u"Product Name", None))
         self.category_DW.setText(QCoreApplication.translate("product_widget", u"Category", None))
-        self.add_new_category_B.setText(QCoreApplication.translate("product_widget", u"Add new category", None))
         self.add_B.setText(QCoreApplication.translate("product_widget", u"Add", None))
+        self.add_new_category_B.setText(QCoreApplication.translate("product_widget", u"Add new category", None))
         self.edit_B.setText(QCoreApplication.translate("product_widget", u"Edit", None))
-        self.delete_B.setText(QCoreApplication.translate("product_widget", u"Delete", None))
+        self.change_status_B.setText(QCoreApplication.translate("product_widget", u"Change status", None))
     # retranslateUi
 
