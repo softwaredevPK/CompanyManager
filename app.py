@@ -13,6 +13,7 @@ import PySide2
 import re
 
 # TODO IDEA: instead of self.ui.long_name_IW.text().strip(), maybe create properties which return it
+# TODO Create properties for widgets
 class SelectedRowMixin:
 
     @staticmethod
@@ -90,6 +91,7 @@ class StartWindow(QtWidgets.QMainWindow):
         if len(items) == 0:
             msg_box = QtWidgets.QMessageBox(icon=QtWidgets.QMessageBox.Information, text="There are no customers in your DataBase.")
             msg_box.exec_()
+            return
         else:
             customer_name, ok = QtWidgets.QInputDialog.getItem(self, 'Editor', 'Choose customer to edit', items, 0, False)
         if ok:  # not canceled
@@ -477,6 +479,7 @@ class ProductWidget(QtWidgets.QDialog, SelectedRowMixin):
         else:
             product.active = True
         db_manager.session.commit()
+        self.ui.Products_IV.model().layoutChanged.emit()
 
     def add_category(self):
         category_name, ok = QtWidgets.QInputDialog.getText(self, 'Category', 'Please add new category.')
@@ -596,8 +599,11 @@ class PriceTableWidget(QtWidgets.QDialog, SelectedRowMixin):
 
         # set current category
         product_index = self.ui.product_IW.currentIndex()
-        product = self.products[product_index]
-        self.ui.category_IW.setText(product.category)
+        if product_index == -1:  # missing products
+            self.ui.category_IW.setText('')
+        else:
+            product = self.products[product_index]
+            self.ui.category_IW.setText(product.category)
 
         # RegexValidator on column 1 with prices
         self.ui.price_IW.setValidator(QtGui.QRegExpValidator("([0-9]+[.])?[0-9]+", self.ui.price_IW))
@@ -631,6 +637,8 @@ class PriceTableWidget(QtWidgets.QDialog, SelectedRowMixin):
 
     def add(self):
         product_index = self.ui.product_IW.currentIndex()
+        if product_index == -1:  # missing products
+            return
         product = self.products[product_index]
         if db_manager.product_in_price_table_exists(product.id, self.customer_id):
             return
@@ -650,6 +658,7 @@ class PriceTableWidget(QtWidgets.QDialog, SelectedRowMixin):
         else:
             price_table.active = True
         db_manager.session.commit()
+        self.ui.table_IV.model().layoutChanged.emit()
 
 
 class PriceTableModel(QtCore.QAbstractTableModel):
