@@ -12,8 +12,7 @@ from utilities import show_msg_box, MessageError
 import PySide2
 import re
 
-# TODO IDEA: instead of self.ui.long_name_IW.text().strip(), maybe create properties which return it
-# TODO Create properties for widgets
+
 class SelectedRowMixin:
 
     @staticmethod
@@ -139,7 +138,9 @@ class AddCustomer(QtWidgets.QDialog):
 
     @property
     def person_req_fields(self):
-        return self.ui.data_person_CT.findChildren(QtWidgets.QLineEdit)
+        req = self.ui.data_person_CT.findChildren(QtWidgets.QLineEdit)
+        req.remove(self.ui.second_name_IW) # second name is not required
+        return req
 
     @property
     def all_qlineedits(self):
@@ -243,28 +244,76 @@ class AddCustomer(QtWidgets.QDialog):
             line_edit.setText('')
         self.ui.country_IW.setCurrentIndex(-1)
 
+    @property
+    def long_name(self):
+        return self.ui.long_name_IW.text().strip()
+
+    @property
+    def short_name(self):
+        return self.ui.short_name_IW.text().strip()
+
+    @property
+    def address(self):
+        return self.ui.address_IW.text().strip()
+
+    @property
+    def tin(self):
+        return self.ui.tin_IW.text().strip()
+
+    @property
+    def country(self):
+        return self.ui.country_IW.currentText().strip()
+
+    @property
+    def zip_code(self):
+        return self.ui.zipe_code_IW.text().strip()
+
+    @property
+    def city(self):
+        return self.ui.town_IW.text().strip()
+
+    @property
+    def email(self):
+        return self.ui.email_IW.text().strip()
+
+    @property
+    def phone_no(self):
+        return self.ui.phone_number_IW.text().strip()
+
+    @property
+    def first_name(self):
+        return self.ui.first_name_IW.text().strip()
+
+    @property
+    def surname(self):
+        return self.ui.surname_IW.text().strip()
+
+    @property
+    def second_name(self):
+        return self.ui.second_name_IW.text().strip()
+
     def add(self):
         """Method for add button to being run when is clicked"""
         if self.req_fields_filled():
             if self.ui.company_B.isChecked():
-                record = Customer(full_name=self.ui.long_name_IW.text().strip(),
-                                  name=self.ui.short_name_IW.text().strip(),
-                                  address=self.ui.address_IW.text().strip(),
-                                  country=self.ui.country_IW.currentText().strip(),
-                                  tin_code=self.ui.tin_IW.text().strip(),
-                                  zip_code=self.ui.zipe_code_IW.text().strip(),
-                                  city=self.ui.town_IW.text().strip(),
-                                  email=self.ui.email_IW.text().strip(),
-                                  phone_number=self.ui.phone_number_IW.text().strip(),
+                record = Customer(full_name=self.long_name,
+                                  name=self.short_name,
+                                  address=self.address,
+                                  country=self.country,
+                                  tin_code=self.tin,
+                                  zip_code=self.zip_code,
+                                  city=self.city,
+                                  email=self.email,
+                                  phone_number=self.phone_no,
                                   is_person=False)
             elif self.ui.person_B.isChecked():
-                record = Customer(name=self.ui.first_name_IW.text().strip() + self.ui.surname_IW.text().strip(),
-                                  full_name=self.ui.first_name_IW.text().strip() + self.ui.second_name_IW.text().strip() + self.ui.surname_IW.text().strip(),
-                                  address=self.ui.address_IW.text().strip(),
-                                  zip_code=self.ui.zipe_code_IW.text().strip(),
-                                  city=self.ui.town_IW.text().strip(),
-                                  email=self.ui.email_IW.text().strip(),
-                                  phone_number=self.ui.phone_number_IW.text().strip(),
+                record = Customer(name=self.first_name + self.surname,
+                                  full_name=self.first_name + self.second_name + self.surname,
+                                  address=self.address,
+                                  zip_code=self.zip_code,
+                                  city=self.city,
+                                  email=self.email,
+                                  phone_number=self.phone_no,
                                   is_person=True)
             try:
                 self.check_customer_constraints(record)
@@ -324,14 +373,14 @@ class EditCustomer(AddCustomer):
         if self.req_fields_filled():
             if self.ui.company_B.isChecked():
                 is_person = False
-                full_name = self.ui.long_name_IW.text().strip()
-                name = self.ui.short_name_IW.text().strip()
-                country = self.ui.country_IW.currentText().strip()
-                tin_code = self.ui.tin_IW.text().strip()
+                full_name = self.long_name
+                name = self.short_name
+                country = self.country
+                tin_code = self.tin
             elif self.ui.person_B.isChecked():
                 is_person = True
-                full_name = self.ui.first_name_IW.text().strip() + self.ui.second_name_IW.text().strip() + self.ui.surname_IW.text().strip()
-                name = self.ui.first_name_IW.text().strip() + self.ui.surname_IW.text().strip()
+                full_name = self.first_name + self.second_name + self.surname
+                name = self.first_name + self.surname
                 country = ''
                 tin_code = ''
             try:
@@ -344,11 +393,11 @@ class EditCustomer(AddCustomer):
                 self.customer.country = country
                 self.customer.tin_code = tin_code
                 self.customer.is_person = is_person
-                self.customer.address = self.ui.address_IW.text().strip()
-                self.customer.city = self.ui.town_IW.text().strip()
-                self.customer.zip_code = self.ui.zipe_code_IW.text().strip()
-                self.customer.email = self.ui.email_IW.text().strip()
-                self.customer.phone_number = self.ui.phone_number_IW.text().strip()
+                self.customer.address = self.address
+                self.customer.city = self.city
+                self.customer.zip_code = self.zip_code
+                self.customer.email = self.email
+                self.customer.phone_number = self.phone_no()
                 db_manager.session.commit()
                 self.accept()
 
@@ -366,15 +415,15 @@ class AddCompany(AddCustomer):
     def add(self):
         """Method for add button to being run when is clicked used only for supplier mode."""
         if self.req_fields_filled():
-            record = Supplier(full_name=self.ui.long_name_IW.text().strip(),
-                              name=self.ui.short_name_IW.text().strip(),
-                              address=self.ui.address_IW.text().strip(),
-                              country=self.ui.country_IW.currentText().strip(),
-                              tin_code=self.ui.tin_IW.text().strip(),
-                              zip_code=self.ui.zipe_code_IW.text().strip(),
-                              city=self.ui.town_IW.text().strip(),
-                              email=self.ui.email_IW.text().strip(),
-                              phone_number=self.ui.phone_number_IW.text().strip())
+            record = Supplier(full_name=self.long_name,
+                              name=self.short_name,
+                              address=self.address,
+                              country=self.country,
+                              tin_code=self.tin,
+                              zip_code=self.zip_code,
+                              city=self.city,
+                              email=self.email,
+                              phone_number=self.phone_no)
             db_manager.session.add(record)
             db_manager.session.commit()
             self.accept()
@@ -409,15 +458,15 @@ class EditCompany(AddCompany):
 
     def update(self):
         if self.req_fields_filled():
-            self.company.full_name = self.ui.long_name_IW.text().strip()
-            self.company.name = self.ui.short_name_IW.text().strip()
-            self.company.country = self.ui.country_IW.currentText().strip()
-            self.company.tin_code = self.ui.tin_IW.text().strip()
-            self.company.address = self.ui.address_IW.text().strip()
-            self.company.city = self.ui.town_IW.text().strip()
-            self.company.zip_code = self.ui.zipe_code_IW.text().strip()
-            self.company.email = self.ui.email_IW.text().strip()
-            self.company.phone_number = self.ui.phone_number_IW.text().strip()
+            self.company.full_name = self.long_name
+            self.company.name = self.short_name
+            self.company.country = self.country
+            self.company.tin_code = self.tin
+            self.company.address = self.address
+            self.company.city = self.country
+            self.company.zip_code = self.zip_code
+            self.company.email = self.email
+            self.company.phone_number = self.phone_no
             db_manager.session.commit()
             self.accept()
 
@@ -447,8 +496,16 @@ class ProductWidget(QtWidgets.QDialog, SelectedRowMixin):
         if db_manager.check_product_name_category_constraint(product.name, product.category):
             raise MessageError(f'Product {product.name} in category {product.category} already exists')
 
+    @property
+    def product_name(self):
+        return self.ui.product_name_IW.text().strip()
+
+    @property
+    def category(self):
+        return self.ui.category_IW.currentText().strip()
+
     def add(self):
-        product = Product(name=self.ui.product_name_IW.text().strip(), category=self.ui.category_IW.currentText().strip())
+        product = Product(name=self.product_name, category=self.category)
         try:
             self.check_product_constraints(product)
         except MessageError as msg:
@@ -465,8 +522,8 @@ class ProductWidget(QtWidgets.QDialog, SelectedRowMixin):
         product = self.model.get_product(selected_row)
         edit_widget = EditProductWidget(product.name)
         if edit_widget.exec_():
-            product.name = edit_widget.new_name()
-            product.category = edit_widget.new_category()
+            product.name = edit_widget.new_name
+            product.category = edit_widget.new_category
             db_manager.session.commit()
 
     def change_status(self):
@@ -554,9 +611,11 @@ class EditProductWidget(QtWidgets.QDialog):
         self.ui.ok_cancel_B.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(self.accept)
         self.ui.ok_cancel_B.button(QtWidgets.QDialogButtonBox.Cancel).clicked.connect(self.reject)
 
+    @property
     def new_name(self):
         return self.ui.product_name_IW.text().strip()
 
+    @property
     def new_category(self):
         return self.ui.category_IW.currentText().strip()
 
@@ -635,6 +694,10 @@ class PriceTableWidget(QtWidgets.QDialog, SelectedRowMixin):
         product = self.products[product_index]
         self.ui.category_IW.setText(product.category)
 
+    @property
+    def price(self):
+        return self.ui.price_IW.text().strip()
+
     def add(self):
         product_index = self.ui.product_IW.currentIndex()
         if product_index == -1:  # missing products
@@ -642,7 +705,7 @@ class PriceTableWidget(QtWidgets.QDialog, SelectedRowMixin):
         product = self.products[product_index]
         if db_manager.product_in_price_table_exists(product.id, self.customer_id):
             return
-        price = self.ui.price_IW.text().strip()
+        price = self.price
         price_table = PriceTable(product_id=product.id, customer_id=self.customer_id, price=0 if price == '' else float(price))
         db_manager.session.add(price_table)
         db_manager.session.commit()
@@ -697,6 +760,14 @@ class PriceTableModel(QtCore.QAbstractTableModel):
         else:
             return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
 
+    def sort(self, column:int, order:PySide2.QtCore.Qt.SortOrder=...):
+        self.layoutAboutToBeChanged.emit()
+        if order == PySide2.QtCore.Qt.SortOrder.AscendingOrder:
+            self.price_tables.sort(key=lambda x: x[column], reverse=False)
+        else:
+            self.price_tables.sort(key=lambda x: x[column], reverse=True)
+        self.layoutChanged.emit()
+
     # other methods
 
     def download_price_table(self, customer_id):
@@ -714,3 +785,4 @@ class PriceTableModel(QtCore.QAbstractTableModel):
         self.layoutAboutToBeChanged.emit()
         self.price_tables.pop(index)
         self.layoutChanged.emit()
+
