@@ -17,6 +17,42 @@ Project uses sqlite DataBase, which scheme is published on
 
 To build GUI Qt Designer was used as part of PySide2 library. 
 
+
+## OverView
+
+###First launch
+
+On the first launch of the program, user would be ask to setup company account.
+![add_customer](/readme_screen_shoots/add_customer.png)
+
+After which welcome window will appear, which will appear within each launch of the program after company account is created.
+![welcome_window](/readme_screen_shoots/welcome_window.png)
+
+
+###Main window
+
+Main window contains buttons which open appropriate modules of program.
+
+![main_window](/readme_screen_shoots/main_window.png)
+
+
+####Add Customer and Edit Customer
+
+Those modules allows to add customers to company database and edit them. 
+If user won't provide all necessary data, appropriate widgets would have red border to inform that there is missing required data.
+![add_customer](/readme_screen_shoots/add_customer.png)
+
+####My Products
+
+Module used to manage information about products that company has in sell. 
+![my_products](/readme_screen_shoots/my_products.png)
+
+####Price-lists
+
+Modules used to create and manage Price-lists for each customer separately. 
+![price_lists](/readme_screen_shoots/price_list.png)
+
+
 ## Technologies
 
 Project is fully build with python (ver 3.8) and its open source libraries:

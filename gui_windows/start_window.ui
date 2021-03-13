@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>600</height>
+    <width>701</width>
+    <height>492</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,6 +15,36 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <widget class="QLabel" name="company_name_DW">
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>100</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>200</height>
+       </size>
+      </property>
+      <property name="font">
+       <font>
+        <family>MS Sans Serif</family>
+        <pointsize>22</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="text">
+       <string>Company Name</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+     </widget>
+    </item>
     <item>
      <widget class="QPushButton" name="add_customer_B">
       <property name="text">
@@ -43,6 +73,20 @@
       </property>
      </widget>
     </item>
+    <item>
+     <widget class="QPushButton" name="add_new_order_B">
+      <property name="text">
+       <string>Add new order</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="show_orders_B">
+      <property name="text">
+       <string>Show orders</string>
+      </property>
+     </widget>
+    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -50,7 +94,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>800</width>
+     <width>701</width>
      <height>21</height>
     </rect>
    </property>

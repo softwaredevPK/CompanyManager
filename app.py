@@ -77,6 +77,7 @@ class StartWindow(QtWidgets.QMainWindow):
         super().__init__()
         self.ui = Ui_StartWindow()
         self.ui.setupUi(self)
+        self.ui.company_name_DW.setText(db_manager.get_supplier_full_name())
         self._connect()
 
     def _connect(self):
@@ -786,3 +787,5 @@ class PriceTableModel(QtCore.QAbstractTableModel):
         self.price_tables.pop(index)
         self.layoutChanged.emit()
 
+
+# todo add MyProductsTable automatic refresh wide of columns to text + PriceList(Price should have . not ,)

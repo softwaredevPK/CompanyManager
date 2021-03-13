@@ -95,6 +95,10 @@ class DBManager:
         q = self.session.query(Product).filter(Product.name == name, Product.category == category)
         return self.session.query(literal(True)).filter(q.exists()).scalar()
 
+    def get_supplier_full_name(self):
+        return self.session.query(Supplier.full_name).one()[0]
+
+
 db_manager = DBManager()
 
 
