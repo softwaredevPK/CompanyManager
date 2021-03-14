@@ -2,7 +2,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import column_property, sessionmaker, relationship
 from sqlalchemy import Column, Integer, String, Float, Date, Boolean
-from sqlalchemy import ForeignKey, UniqueConstraint, create_engine
+from sqlalchemy import ForeignKey, UniqueConstraint, create_engine, join
 from math import fsum
 
 from utilities import SingleInstanceClass
@@ -109,6 +109,7 @@ class Order(Base):
     customer_id = Column(Integer, ForeignKey('customers.id'))
     order_date = Column(Date)
     delivery_date = Column(Date)
+    # todo maybe add new Bool column "Delivered"
 
 
 class OrderDetail(Base):
@@ -142,3 +143,22 @@ class DataAccessLayer(SingleInstanceClass):
         self.engine = create_engine(self.conn_string, echo=self.echo)
         Base.metadata.create_all(self.engine)
         self.session_maker = sessionmaker(bind=self.engine)
+
+
+orders_join = join(Order.__table__, Customer.__table__, Order.customer_id == Customer.id)
+
+
+class CustomerOrder(Base):
+    __table__ = orders_join
+
+    customer_id = column_property(Order.customer_id, Customer.id)
+
+    @staticmethod
+    def cols():
+        return ['customer_name', 'order_date', 'delivery_date']
+
+    def __values(self):
+        return [self.name, self.order_date, self.delivery_date]
+
+    def __getitem__(self, item):
+        return self.__values()[item]

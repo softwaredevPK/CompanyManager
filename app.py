@@ -4,8 +4,9 @@ from gui_windows.start_window import Ui_StartWindow
 from gui_windows.products_widget import Ui_product_widget
 from gui_windows.edit_product_widget import Ui_edit_product
 from gui_windows.price_tables_widget import Ui_price_table_widget
+from gui_windows.show_orders_widget import Ui_show_orders
 from PySide2 import QtCore, QtGui, QtWidgets
-from orm import Customer, Supplier, Product, Category, PriceTable
+from orm import Customer, Supplier, Product, Category, PriceTable, CustomerOrder
 from db_manager import db_manager
 from functools import partial
 from utilities import show_msg_box, MessageError
@@ -85,6 +86,7 @@ class StartWindow(QtWidgets.QMainWindow):
         self.ui.edit_customer_B.clicked.connect(self.edit_customer)
         self.ui.my_procust_B.clicked.connect(self.my_products)
         self.ui.price_lists_B.clicked.connect(self.price_lists)
+        self.ui.show_orders_B.clicked.connect(self.show_orders)
 
     def edit_customer(self):
         items = db_manager.get_customers_names()
@@ -111,6 +113,10 @@ class StartWindow(QtWidgets.QMainWindow):
         price_table = PriceTableWidget()
         if price_table.runnable():
             price_table.exec_()
+
+    def show_orders(self):
+        orders = ShowOrdersWidget()
+        orders.exec_()
 
 
 class AddCustomer(QtWidgets.QDialog):
@@ -786,6 +792,39 @@ class PriceTableModel(QtCore.QAbstractTableModel):
         self.layoutAboutToBeChanged.emit()
         self.price_tables.pop(index)
         self.layoutChanged.emit()
+
+
+class ShowOrdersWidget(QtWidgets.QDialog, SelectedRowMixin):
+
+    def __init__(self):
+        super().__init__()
+        self.ui = Ui_show_orders()
+        self.ui.setupUi(self)
+        self.model = ShowOrdersModel()
+        self._connect()
+
+    def _connect(self):
+        self.ui.orders_IV.setModel(self.model)
+
+
+class ShowOrdersModel(QtCore.QAbstractTableModel):
+
+    def __init__(self):
+        super().__init__()
+        self.orders = []
+
+    def rowCount(self, parent):
+        return len(self.orders)
+
+    def columnCount(self, parent):
+        return len(CustomerOrder.cols())
+
+    def data(self, index, role=QtCore.Qt.DisplayRole):
+        if role == QtCore.Qt.DisplayRole:
+            row = index.row()
+            col = index.column()
+            return self.orders[row][col]
+
 
 
 # todo add MyProductsTable automatic refresh wide of columns to text + PriceList(Price should have . not ,)
