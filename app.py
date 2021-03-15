@@ -521,6 +521,7 @@ class ProductWidget(QtWidgets.QDialog, SelectedRowMixin):
             db_manager.session.add(product)
             db_manager.session.commit()
             self.model.add_product(product)
+            self.ui.Products_IV.resizeColumnsToContents()
 
     def edit_product(self):
         selected_row = self.get_selected_row(self.ui.Products_IV)
@@ -532,6 +533,7 @@ class ProductWidget(QtWidgets.QDialog, SelectedRowMixin):
             product.name = edit_widget.new_name
             product.category = edit_widget.new_category
             db_manager.session.commit()
+            self.ui.Products_IV.resizeColumnsToContents()
 
     def change_status(self):
         selected_row = self.get_selected_row(self.ui.Products_IV)
@@ -554,6 +556,7 @@ class ProductWidget(QtWidgets.QDialog, SelectedRowMixin):
             db_manager.session.add(category)
             db_manager.session.commit()
             self.ui.category_IW.addItem(category_name)
+            self.ui.Products_IV.resizeColumnsToContents()
 
 
 class ProductModel(QtCore.QAbstractTableModel):
@@ -695,6 +698,7 @@ class PriceTableWidget(QtWidgets.QDialog, SelectedRowMixin):
 
     def refresh_model(self):
         self.model.download_price_table(self.customer_id)
+        self.ui.table_IV.resizeColumnsToContents()
 
     def update_category(self):
         product_index = self.ui.product_IW.currentIndex()
@@ -717,6 +721,7 @@ class PriceTableWidget(QtWidgets.QDialog, SelectedRowMixin):
         db_manager.session.add(price_table)
         db_manager.session.commit()
         self.model.add_price_table(price_table)
+        self.ui.table_IV.resizeColumnsToContents()
 
     def change_status(self):
         selected_row = self.get_selected_row(self.ui.table_IV)
@@ -811,20 +816,47 @@ class ShowOrdersModel(QtCore.QAbstractTableModel):
 
     def __init__(self):
         super().__init__()
-        self.orders = []
+        self.orders = db_manager.get_all_customers_orders()
 
     def rowCount(self, parent):
         return len(self.orders)
 
     def columnCount(self, parent):
+        return 3
         return len(CustomerOrder.cols())
 
     def data(self, index, role=QtCore.Qt.DisplayRole):
+        print(index.column())
         if role == QtCore.Qt.DisplayRole:
             row = index.row()
             col = index.column()
-            return self.orders[row][col]
+            return str(self.orders[row][col])
+
+    def headerData(self, section: int, orientation: PySide2.QtCore.Qt.Orientation, role: int = ...):
+        if role == QtCore.Qt.DisplayRole:
+            if orientation == QtCore.Qt.Horizontal:
+                return CustomerOrder.cols()[section]
+            elif orientation == QtCore.Qt.Vertical:
+                return section
+
+    def setData(self, index, value, role):
+        if role == QtCore.Qt.EditRole:
+            # if index.column() == PriceTable.get_price_key():
+
+            self.orders[index.row()][index.column()] = value
+
+    def flags(self, index: PySide2.QtCore.QModelIndex) -> PySide2.QtCore.Qt.ItemFlags:
+        if index.column() == CustomerOrder.get_editable_keys():
+            return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable
+        else:
+            return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+
+    def sort(self, column: int, order: PySide2.QtCore.Qt.SortOrder = ...):
+        self.layoutAboutToBeChanged.emit()
+        if order == PySide2.QtCore.Qt.SortOrder.AscendingOrder:
+            self.orders.sort(key=lambda x: x[column], reverse=False)
+        else:
+            self.orders.sort(key=lambda x: x[column], reverse=True)
+        self.layoutChanged.emit()
 
 
-
-# todo add MyProductsTable automatic refresh wide of columns to text + PriceList(Price should have . not ,)

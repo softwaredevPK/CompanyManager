@@ -162,3 +162,7 @@ class CustomerOrder(Base):
 
     def __getitem__(self, item):
         return self.__values()[item]
+
+    @staticmethod
+    def get_editable_keys():
+        return ['order_date', 'delivery_date']

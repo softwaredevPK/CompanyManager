@@ -72,6 +72,8 @@ class Ui_price_table_widget(object):
         self.table_IV.setObjectName(u"table_IV")
         self.table_IV.setSelectionMode(QAbstractItemView.SingleSelection)
         self.table_IV.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.table_IV.setSortingEnabled(True)
+        self.table_IV.horizontalHeader().setProperty("showSortIndicator", True)
 
         self.verticalLayout.addWidget(self.table_IV)
 

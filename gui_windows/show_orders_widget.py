@@ -20,8 +20,12 @@ class Ui_show_orders(object):
         show_orders.resize(400, 299)
         self.verticalLayout = QVBoxLayout(show_orders)
         self.verticalLayout.setObjectName(u"verticalLayout")
-        self.orders_IV = QListView(show_orders)
+        self.orders_IV = QTableView(show_orders)
         self.orders_IV.setObjectName(u"orders_IV")
+        self.orders_IV.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.orders_IV.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.orders_IV.setSortingEnabled(True)
+        self.orders_IV.horizontalHeader().setProperty("showSortIndicator", True)
 
         self.verticalLayout.addWidget(self.orders_IV)
 

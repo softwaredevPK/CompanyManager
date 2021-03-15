@@ -3,7 +3,7 @@ from pathlib import Path
 import pandas as pd
 from sqlalchemy import literal
 
-from orm import Supplier, Country, Customer, DataAccessLayer, Product, Category, PriceTable
+from orm import Supplier, Country, Customer, DataAccessLayer, Product, Category, PriceTable, CustomerOrder
 
 
 class DBManager:
@@ -97,6 +97,9 @@ class DBManager:
 
     def get_supplier_full_name(self):
         return self.session.query(Supplier.full_name).one()[0]
+
+    def get_all_customers_orders(self):
+        return self.session.query(CustomerOrder).all()
 
 
 db_manager = DBManager()
