@@ -5,8 +5,9 @@ from gui_windows.products_widget import Ui_product_widget
 from gui_windows.edit_product_widget import Ui_edit_product
 from gui_windows.price_tables_widget import Ui_price_table_widget
 from gui_windows.show_orders_widget import Ui_show_orders
+from gui_windows.order_details_widget import Ui_order_details
 from PySide2 import QtCore, QtGui, QtWidgets
-from orm import Customer, Supplier, Product, Category, PriceTable, CustomerOrder
+from orm import Customer, Supplier, Product, Category, PriceTable, CustomerOrder, OrderDetail
 from db_manager import db_manager
 from functools import partial
 from utilities import show_msg_box, MessageError
@@ -810,6 +811,16 @@ class ShowOrdersWidget(QtWidgets.QDialog, SelectedRowMixin):
 
     def _connect(self):
         self.ui.orders_IV.setModel(self.model)
+        self.ui.details_B.clicked.connect(self.details)
+
+    def details(self):
+        selected_row = self.get_selected_row(self.ui.orders_IV)
+        if selected_row is None:
+            return
+        order_id = self.model.get_order_id(selected_row)
+        details = OrderDetailsWidget(order_id)
+        self.close()
+        details.exec_()
 
 
 class ShowOrdersModel(QtCore.QAbstractTableModel):
@@ -822,11 +833,9 @@ class ShowOrdersModel(QtCore.QAbstractTableModel):
         return len(self.orders)
 
     def columnCount(self, parent):
-        return 3
         return len(CustomerOrder.cols())
 
     def data(self, index, role=QtCore.Qt.DisplayRole):
-        print(index.column())
         if role == QtCore.Qt.DisplayRole:
             row = index.row()
             col = index.column()
@@ -859,4 +868,75 @@ class ShowOrdersModel(QtCore.QAbstractTableModel):
             self.orders.sort(key=lambda x: x[column], reverse=True)
         self.layoutChanged.emit()
 
+    def get_order_id(self, index):
+        return self.orders[index].id
+
+
+class OrderDetailsWidget(QtWidgets.QDialog, SelectedRowMixin):
+    def __init__(self, order_id):
+        super().__init__()
+        self.ui = Ui_order_details()
+        self.ui.setupUi(self)
+        self.model = OrderDetailsModel(order_id)
+        self._connect()
+
+    def _connect(self):
+        self.ui.table_IV.setModel(self.model)
+        self.ui.edit_B.clicked.connect(self.edit)
+        self.ui.return_B.clicked.connect(self.return_)
+
+    def return_(self):
+        orders = ShowOrdersWidget()
+        self.close()
+        orders.exec_()
+
+    def edit(self):
+        ... # todo
+
+
+class OrderDetailsModel(QtCore.QAbstractTableModel):
+
+    def __init__(self, order_id):
+        super().__init__()
+        self.order_details = db_manager.get_order_details(order_id)
+
+    def rowCount(self, parent):
+        return len(self.order_details)
+
+    def columnCount(self, parent):
+        return len(OrderDetail.cols())
+
+    def data(self, index, role=QtCore.Qt.DisplayRole):
+        if role == QtCore.Qt.DisplayRole:
+            row = index.row()
+            col = index.column()
+            return str(self.order_details[row][col])
+
+    def headerData(self, section: int, orientation: PySide2.QtCore.Qt.Orientation, role: int = ...):
+        if role == QtCore.Qt.DisplayRole:
+            if orientation == QtCore.Qt.Horizontal:
+                return OrderDetail.cols()[section]
+            elif orientation == QtCore.Qt.Vertical:
+                return section
+
+    def setData(self, index, value, role):
+        if role == QtCore.Qt.EditRole:
+            self.order_details[index.row()][index.column()] = value
+
+    def flags(self, index: PySide2.QtCore.QModelIndex) -> PySide2.QtCore.Qt.ItemFlags:
+        if index.column() == OrderDetail.get_editable_keys():
+            return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable
+        else:
+            return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+
+    def sort(self, column: int, order: PySide2.QtCore.Qt.SortOrder = ...):
+        self.layoutAboutToBeChanged.emit()
+        if order == PySide2.QtCore.Qt.SortOrder.AscendingOrder:
+            self.order_details.sort(key=lambda x: x[column], reverse=False)
+        else:
+            self.order_details.sort(key=lambda x: x[column], reverse=True)
+        self.layoutChanged.emit()
+
+
+# todo instead of new widget, use showoder, where resfresh btn would be close btn/return and new model will be provided :D
 

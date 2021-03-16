@@ -116,10 +116,26 @@ class OrderDetail(Base):
     __tablename__ = 'orders_details'
 
     order_id = Column(Integer, ForeignKey('orders.id'), primary_key=True)
-    product_id = Column(Integer, ForeignKey('price_tables.product_id'), primary_key=True)
+    product_id = Column(Integer, ForeignKey('products.id'), primary_key=True)
     quantity = Column(Integer)
     unit_price = Column(Float)
     total_price = column_property(quantity * unit_price)
+
+    product = relationship('Product', lazy='joined')
+
+    @staticmethod
+    def cols():
+        return ['product_name', 'category', 'quantity', 'unit_price', 'total_price']
+
+    def __values(self):
+        return [self.product.name, self.product.category, self.quantity, self.unit_price, self.total_price]
+
+    def __getitem__(self, item):
+        return self.__values()[item]
+
+    @staticmethod
+    def get_editable_keys():
+        return ['quantity', 'unit_price']
 
 
 class Country(Base):
