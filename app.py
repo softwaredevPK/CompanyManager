@@ -832,19 +832,7 @@ class OrderDetailsModel(MyAbstractModel):
 
     def __init__(self, order_id):
         super().__init__()
-        self.order_details = db_manager.get_order_details(order_id)
-
-    def rowCount(self, parent):
-        return len(self.order_details)
-
-    def columnCount(self, parent):
-        return len(OrderDetail.cols())
-
-    def data(self, index, role=QtCore.Qt.DisplayRole):
-        if role == QtCore.Qt.DisplayRole:
-            row = index.row()
-            col = index.column()
-            return str(self.order_details[row][col])
+        self.list = db_manager.get_order_details(order_id)
 
 
 # todo Add order + edit in Order Details are to be created
