@@ -10,6 +10,38 @@ from utilities import SingleInstanceClass
 Base = declarative_base()
 
 
+class AbstractReqMethods:
+    """
+    Class provide basics methods which are required by AbstractTableModels from models with they are connected
+    """
+
+    @staticmethod
+    def cols():
+        """
+        :return:  list of cols_names(str)"""
+        return []
+
+    @staticmethod
+    def get_editable_keys():
+        """
+        :return:  list of int which represents index of string from self.cols() which are editable in AbstractModels"""
+        return []
+
+    def _values(self):
+        """
+        :return: List of values for each column available under self.cols()
+        """
+        return []
+
+    def __getitem__(self, item):
+        return self._values()[item]
+
+    def __setitem__(self, key, value):
+        if key in self.get_editable_keys():
+            setattr(self, self.cols()[key], value)
+            self.price = value
+
+
 class Customer(Base):
     __tablename__ = 'customers'
 
@@ -44,7 +76,7 @@ class Supplier(Base):
     phone_number = Column(Integer)
 
 
-class Product(Base):
+class Product(Base, AbstractReqMethods):
     __tablename__ = 'products'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -58,11 +90,8 @@ class Product(Base):
     def cols():
         return ['name', 'category', 'status']
 
-    def __values(self):
+    def _values(self):
         return [self.name, self.category,  'active' if self.active else 'inactive']
-
-    def __getitem__(self, item):
-        return self.__values()[item]
 
 
 class Category(Base):
@@ -71,7 +100,7 @@ class Category(Base):
     name = Column(String, primary_key=True, autoincrement=False)
 
 
-class PriceTable(Base):
+class PriceTable(Base, AbstractReqMethods):
     __tablename__ = 'price_tables'
 
     product_id = Column(Integer, ForeignKey('products.id'), primary_key=True)
@@ -86,20 +115,11 @@ class PriceTable(Base):
         return ['product_name', 'price', 'category', 'status']
 
     @staticmethod
-    def get_price_key():
-        return PriceTable.cols().index('price')
+    def get_editable_keys():
+        return [PriceTable.cols().index('price')]
 
-    def __values(self):
+    def _values(self):
         return [self.product.name, self.price, self.product.category, 'active' if self.active else 'inactive']
-
-    def __getitem__(self, item):
-        return self.__values()[item]
-
-    def __setitem__(self, key, value):
-        if key == self.get_price_key():
-            self.price = value
-        else:
-            raise KeyError("Setter accept only 1 as key")
 
 
 class Order(Base):
@@ -112,7 +132,7 @@ class Order(Base):
     # todo maybe add new Bool column "Delivered"
 
 
-class OrderDetail(Base):
+class OrderDetail(Base, AbstractReqMethods):
     __tablename__ = 'orders_details'
 
     order_id = Column(Integer, ForeignKey('orders.id'), primary_key=True)
@@ -127,15 +147,8 @@ class OrderDetail(Base):
     def cols():
         return ['product_name', 'category', 'quantity', 'unit_price', 'total_price']
 
-    def __values(self):
+    def _values(self):
         return [self.product.name, self.product.category, self.quantity, self.unit_price, self.total_price]
-
-    def __getitem__(self, item):
-        return self.__values()[item]
-
-    @staticmethod
-    def get_editable_keys():
-        return ['quantity', 'unit_price']
 
 
 class Country(Base):
@@ -164,7 +177,7 @@ class DataAccessLayer(SingleInstanceClass):
 orders_join = join(Order.__table__, Customer.__table__, Order.customer_id == Customer.id)
 
 
-class CustomerOrder(Base):
+class CustomerOrder(Base, AbstractReqMethods):
     __table__ = orders_join
 
     customer_id = column_property(Order.customer_id, Customer.id)
@@ -173,12 +186,5 @@ class CustomerOrder(Base):
     def cols():
         return ['customer_name', 'order_date', 'delivery_date']
 
-    def __values(self):
+    def _values(self):
         return [self.name, self.order_date, self.delivery_date]
-
-    def __getitem__(self, item):
-        return self.__values()[item]
-
-    @staticmethod
-    def get_editable_keys():
-        return ['order_date', 'delivery_date']

@@ -15,6 +15,71 @@ import PySide2
 import re
 
 
+class MyAbstractModel(QtCore.QAbstractTableModel):
+    """Parent class for other AbstractModels with similar implementation of basic methods"""
+    model = None
+
+    def __init__(self):
+        super().__init__()
+        self.list = []
+
+    def rowCount(self, parent):
+        return len(self.list)
+
+    def columnCount(self, parent):
+        return len(self.model.cols())
+
+    def data(self, index, role=QtCore.Qt.DisplayRole):
+        if role == QtCore.Qt.DisplayRole:
+            row = index.row()
+            col = index.column()
+            return self.list[row][col]
+
+    def headerData(self, section: int, orientation: PySide2.QtCore.Qt.Orientation, role: int=...):
+        if role == QtCore.Qt.DisplayRole:
+            if orientation == QtCore.Qt.Horizontal:
+                return self.model.cols()[section]
+            elif orientation == QtCore.Qt.Vertical:
+                return section
+
+    def sort(self, column:int, order:PySide2.QtCore.Qt.SortOrder=...):
+        self.layoutAboutToBeChanged.emit()
+        if order == PySide2.QtCore.Qt.SortOrder.AscendingOrder:
+            self.list.sort(key=lambda x: x[column], reverse=False)
+        else:
+            self.list.sort(key=lambda x: x[column], reverse=True)
+        self.layoutChanged.emit()
+
+    def setData(self, index, value, role):
+        if role == QtCore.Qt.EditRole:
+            self.list[index.row()][index.column()] = value
+            db_manager.session.commit()
+            return True
+        else:
+            return False
+
+    def flags(self, index: PySide2.QtCore.QModelIndex) -> PySide2.QtCore.Qt.ItemFlags:
+        if index.column() in self.model.get_editable_keys():
+            return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable
+        else:
+            return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+
+    # Below method edit list of objects stored in model, do not touch DB
+
+    def add_item(self, item):
+        self.layoutAboutToBeChanged.emit()
+        self.list.append(item)
+        self.layoutChanged.emit()
+
+    def get_item(self, index):
+        return self.list[index]
+
+    def delete_item(self, index):
+        self.layoutAboutToBeChanged.emit()
+        self.list.pop(index)
+        self.layoutChanged.emit()
+
+
 class SelectedRowMixin:
 
     @staticmethod
@@ -521,14 +586,14 @@ class ProductWidget(QtWidgets.QDialog, SelectedRowMixin):
         else:
             db_manager.session.add(product)
             db_manager.session.commit()
-            self.model.add_product(product)
+            self.model.add_item(product)
             self.ui.Products_IV.resizeColumnsToContents()
 
     def edit_product(self):
         selected_row = self.get_selected_row(self.ui.Products_IV)
         if selected_row is None:
             return
-        product = self.model.get_product(selected_row)
+        product = self.model.get_item(selected_row)
         edit_widget = EditProductWidget(product.name)
         if edit_widget.exec_():
             product.name = edit_widget.new_name
@@ -540,7 +605,7 @@ class ProductWidget(QtWidgets.QDialog, SelectedRowMixin):
         selected_row = self.get_selected_row(self.ui.Products_IV)
         if selected_row is None:
             return
-        product = self.model.get_product(selected_row)
+        product = self.model.get_item(selected_row)
         if product.active:
             product.active = False
         else:
@@ -560,53 +625,12 @@ class ProductWidget(QtWidgets.QDialog, SelectedRowMixin):
             self.ui.Products_IV.resizeColumnsToContents()
 
 
-class ProductModel(QtCore.QAbstractTableModel):
+class ProductModel(MyAbstractModel):
+    model = Product
 
     def __init__(self):
         super().__init__()
-        self.products = db_manager.get_all_products()
-
-    def rowCount(self, parent):
-        return len(self.products)
-
-    def columnCount(self, parent):
-        return len(Product.cols())
-
-    def data(self, index, role=QtCore.Qt.DisplayRole):
-        if role == QtCore.Qt.DisplayRole:
-            row = index.row()
-            col = index.column()
-            return self.products[row][col]
-
-    def headerData(self, section: int, orientation: PySide2.QtCore.Qt.Orientation, role: int=...):
-        if role == QtCore.Qt.DisplayRole:
-            if orientation == QtCore.Qt.Horizontal:
-                return Product.cols()[section]
-            elif orientation == QtCore.Qt.Vertical:
-                return section
-
-    # Below method edit list of objects stored in model, do not touch DB
-
-    def add_product(self, product: Product):
-        self.layoutAboutToBeChanged.emit()
-        self.products.append(product)
-        self.layoutChanged.emit()
-
-    def get_product(self, index):
-        return self.products[index]
-
-    def delete_product(self, index):
-        self.layoutAboutToBeChanged.emit()
-        self.products.pop(index)
-        self.layoutChanged.emit()
-
-    def sort(self, column:int, order:PySide2.QtCore.Qt.SortOrder=...):
-        self.layoutAboutToBeChanged.emit()
-        if order == PySide2.QtCore.Qt.SortOrder.AscendingOrder:
-            self.products.sort(key=lambda x: x[column], reverse=False)
-        else:
-            self.products.sort(key=lambda x: x[column], reverse=True)
-        self.layoutChanged.emit()
+        self.list = db_manager.get_all_products()
 
 
 class EditProductWidget(QtWidgets.QDialog):
@@ -639,7 +663,7 @@ class PriceTableWidget(QtWidgets.QDialog, SelectedRowMixin):
         def createEditor(self, parent, option, index):
             if not index.isValid():
                 return 0
-            if index.column() == PriceTable.get_price_key():  # price column
+            if index.column() in PriceTable.get_editable_keys():  # price column
                 editor = QtWidgets.QLineEdit(parent)
                 validator = QtGui.QRegExpValidator("([0-9]+[.])?[0-9]+", editor)
                 editor.setValidator(validator)
@@ -721,83 +745,33 @@ class PriceTableWidget(QtWidgets.QDialog, SelectedRowMixin):
         price_table = PriceTable(product_id=product.id, customer_id=self.customer_id, price=0 if price == '' else float(price))
         db_manager.session.add(price_table)
         db_manager.session.commit()
-        self.model.add_price_table(price_table)
+        self.model.add_item(price_table)
         self.ui.table_IV.resizeColumnsToContents()
 
     def change_status(self):
         selected_row = self.get_selected_row(self.ui.table_IV)
         if selected_row is None:
             return
-        price_table = self.model.get_price_table(selected_row)
+        price_table = self.model.get_item(selected_row)
         if price_table.active:
             price_table.active = False
         else:
             price_table.active = True
         db_manager.session.commit()
         self.ui.table_IV.model().layoutChanged.emit()
+        self.ui.table_IV.resizeColumnsToContents()
 
 
-class PriceTableModel(QtCore.QAbstractTableModel):
+class PriceTableModel(MyAbstractModel):
+    model = PriceTable
 
     def __init__(self):
         super().__init__()
-        self.price_tables = []
-
-    def rowCount(self, parent):
-        return len(self.price_tables)
-
-    def columnCount(self, parent):
-        return len(PriceTable.cols())
-
-    def data(self, index, role=QtCore.Qt.DisplayRole):
-        if role == QtCore.Qt.DisplayRole:
-            row = index.row()
-            col = index.column()
-            return self.price_tables[row][col]
-
-    def headerData(self, section: int, orientation: PySide2.QtCore.Qt.Orientation, role: int = ...):
-        if role == QtCore.Qt.DisplayRole:
-            if orientation == QtCore.Qt.Horizontal:
-                return PriceTable.cols()[section]
-            elif orientation == QtCore.Qt.Vertical:
-                return section
-
-    def setData(self, index, value, role):
-        if role == QtCore.Qt.EditRole:
-            if index.column() == PriceTable.get_price_key():
-                self.price_tables[index.row()][index.column()] = value
-
-    def flags(self, index:PySide2.QtCore.QModelIndex) -> PySide2.QtCore.Qt.ItemFlags:
-        if index.column() == PriceTable.get_price_key():
-            return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable
-        else:
-            return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
-
-    def sort(self, column:int, order:PySide2.QtCore.Qt.SortOrder=...):
-        self.layoutAboutToBeChanged.emit()
-        if order == PySide2.QtCore.Qt.SortOrder.AscendingOrder:
-            self.price_tables.sort(key=lambda x: x[column], reverse=False)
-        else:
-            self.price_tables.sort(key=lambda x: x[column], reverse=True)
-        self.layoutChanged.emit()
+        self.list = []
 
     # other methods
-
     def download_price_table(self, customer_id):
-        self.price_tables = db_manager.get_price_table(customer_id)
-
-    def add_price_table(self, price_table):
-        self.layoutAboutToBeChanged.emit()
-        self.price_tables.append(price_table)
-        self.layoutChanged.emit()
-
-    def get_price_table(self, index):
-        return self.price_tables[index]
-
-    def delete_price_table(self, index):
-        self.layoutAboutToBeChanged.emit()
-        self.price_tables.pop(index)
-        self.layoutChanged.emit()
+        self.list = db_manager.get_price_table(customer_id)
 
 
 class ShowOrdersWidget(QtWidgets.QDialog, SelectedRowMixin):
@@ -817,59 +791,18 @@ class ShowOrdersWidget(QtWidgets.QDialog, SelectedRowMixin):
         selected_row = self.get_selected_row(self.ui.orders_IV)
         if selected_row is None:
             return
-        order_id = self.model.get_order_id(selected_row)
+        order_id = self.model.get_item(selected_row).id
         details = OrderDetailsWidget(order_id)
         self.close()
         details.exec_()
 
 
-class ShowOrdersModel(QtCore.QAbstractTableModel):
+class ShowOrdersModel(MyAbstractModel):
+    model = CustomerOrder
 
     def __init__(self):
         super().__init__()
-        self.orders = db_manager.get_all_customers_orders()
-
-    def rowCount(self, parent):
-        return len(self.orders)
-
-    def columnCount(self, parent):
-        return len(CustomerOrder.cols())
-
-    def data(self, index, role=QtCore.Qt.DisplayRole):
-        if role == QtCore.Qt.DisplayRole:
-            row = index.row()
-            col = index.column()
-            return str(self.orders[row][col])
-
-    def headerData(self, section: int, orientation: PySide2.QtCore.Qt.Orientation, role: int = ...):
-        if role == QtCore.Qt.DisplayRole:
-            if orientation == QtCore.Qt.Horizontal:
-                return CustomerOrder.cols()[section]
-            elif orientation == QtCore.Qt.Vertical:
-                return section
-
-    def setData(self, index, value, role):
-        if role == QtCore.Qt.EditRole:
-            # if index.column() == PriceTable.get_price_key():
-
-            self.orders[index.row()][index.column()] = value
-
-    def flags(self, index: PySide2.QtCore.QModelIndex) -> PySide2.QtCore.Qt.ItemFlags:
-        if index.column() == CustomerOrder.get_editable_keys():
-            return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable
-        else:
-            return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
-
-    def sort(self, column: int, order: PySide2.QtCore.Qt.SortOrder = ...):
-        self.layoutAboutToBeChanged.emit()
-        if order == PySide2.QtCore.Qt.SortOrder.AscendingOrder:
-            self.orders.sort(key=lambda x: x[column], reverse=False)
-        else:
-            self.orders.sort(key=lambda x: x[column], reverse=True)
-        self.layoutChanged.emit()
-
-    def get_order_id(self, index):
-        return self.orders[index].id
+        self.list = db_manager.get_all_customers_orders()
 
 
 class OrderDetailsWidget(QtWidgets.QDialog, SelectedRowMixin):
@@ -894,7 +827,8 @@ class OrderDetailsWidget(QtWidgets.QDialog, SelectedRowMixin):
         ... # todo
 
 
-class OrderDetailsModel(QtCore.QAbstractTableModel):
+class OrderDetailsModel(MyAbstractModel):
+    model = OrderDetail
 
     def __init__(self, order_id):
         super().__init__()
@@ -912,31 +846,10 @@ class OrderDetailsModel(QtCore.QAbstractTableModel):
             col = index.column()
             return str(self.order_details[row][col])
 
-    def headerData(self, section: int, orientation: PySide2.QtCore.Qt.Orientation, role: int = ...):
-        if role == QtCore.Qt.DisplayRole:
-            if orientation == QtCore.Qt.Horizontal:
-                return OrderDetail.cols()[section]
-            elif orientation == QtCore.Qt.Vertical:
-                return section
 
-    def setData(self, index, value, role):
-        if role == QtCore.Qt.EditRole:
-            self.order_details[index.row()][index.column()] = value
-
-    def flags(self, index: PySide2.QtCore.QModelIndex) -> PySide2.QtCore.Qt.ItemFlags:
-        if index.column() == OrderDetail.get_editable_keys():
-            return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable
-        else:
-            return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
-
-    def sort(self, column: int, order: PySide2.QtCore.Qt.SortOrder = ...):
-        self.layoutAboutToBeChanged.emit()
-        if order == PySide2.QtCore.Qt.SortOrder.AscendingOrder:
-            self.order_details.sort(key=lambda x: x[column], reverse=False)
-        else:
-            self.order_details.sort(key=lambda x: x[column], reverse=True)
-        self.layoutChanged.emit()
+# todo Add order + edit in Order Details are to be created
+#todo show_orders edit dates btn and function to being created
 
 
-# todo instead of new widget, use showoder, where resfresh btn would be close btn/return and new model will be provided :D
-
+# todo i have comma instead of dot in Price-Lists
+# todo status in price_list should be connected with status of product(can't be avalaible when products is not etc), so Product should change it's status
