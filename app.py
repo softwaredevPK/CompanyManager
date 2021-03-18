@@ -6,6 +6,7 @@ from gui_windows.edit_product_widget import Ui_edit_product
 from gui_windows.price_tables_widget import Ui_price_table_widget
 from gui_windows.show_orders_widget import Ui_show_orders
 from gui_windows.order_details_widget import Ui_order_details
+from gui_windows.create_order_widget import Ui_create_order
 from PySide2 import QtCore, QtGui, QtWidgets
 from orm import Customer, Supplier, Product, Category, PriceTable, CustomerOrder, OrderDetail
 from db_manager import db_manager
@@ -153,15 +154,22 @@ class StartWindow(QtWidgets.QMainWindow):
         self.ui.my_procust_B.clicked.connect(self.my_products)
         self.ui.price_lists_B.clicked.connect(self.price_lists)
         self.ui.show_orders_B.clicked.connect(self.show_orders)
+        self.ui.add_new_order_B.clicked.connect(self.add_new_order)
 
-    def edit_customer(self):
+    def customer_input_dialog(self):
         items = db_manager.get_customers_names()
         if len(items) == 0:
-            msg_box = QtWidgets.QMessageBox(icon=QtWidgets.QMessageBox.Information, text="There are no customers in your DataBase.")
+            msg_box = QtWidgets.QMessageBox(icon=QtWidgets.QMessageBox.Information,
+                                            text="There are no customers in your DataBase.")
             msg_box.exec_()
             return
         else:
-            customer_name, ok = QtWidgets.QInputDialog.getItem(self, 'Editor', 'Choose customer to edit', items, 0, False)
+            customer_name, ok = QtWidgets.QInputDialog.getItem(self, 'Editor', 'Choose customer to edit', items, 0,
+                                                               False)
+            return customer_name, ok
+
+    def edit_customer(self):
+        customer_name, ok = self.customer_input_dialog()
         if ok:  # not canceled
             customer = db_manager.get_customer(customer_name)
             edit_cust = EditCustomer(customer)
@@ -183,6 +191,13 @@ class StartWindow(QtWidgets.QMainWindow):
     def show_orders(self):
         orders = ShowOrdersWidget()
         orders.exec_()
+
+    def add_new_order(self):
+        customer_name, ok = self.customer_input_dialog()
+        if ok:  # not canceled
+            customer = db_manager.get_customer(customer_name)
+            create = CreateOrderWidget(customer)
+            create.exec_()
 
 
 class AddCustomer(QtWidgets.QDialog):
@@ -833,6 +848,37 @@ class OrderDetailsModel(MyAbstractModel):
     def __init__(self, order_id):
         super().__init__()
         self.list = db_manager.get_order_details(order_id)
+
+# todo undder quantiti regex, set current date for dates
+class CreateOrderWidget(QtWidgets.QDialog, SelectedRowMixin):
+    def __init__(self, customer):
+        super().__init__()
+        self.customer = customer
+        self.ui = Ui_create_order()
+        self.ui.setupUi(self)
+        # self.model = OrderDetailsModel(order_id)
+        self.products = db_manager.get_customer_products(customer.id)
+        self._connect()
+
+    def _connect(self):
+        self.ui.product_IW.addItems(self.products)
+        for i, product in enumerate(self.products):
+            self.ui.product_IW.setItemText(i, product.product.name)
+
+        # self.ui.table_IV.setModel(self.model)
+        self.ui.save_B.clicked.connect(self.save)
+        self.ui.add_B.clicked.connect(self.add)
+        self.ui.remove_B.clicked.connect(self.remove)
+
+    def add(self):
+        ...
+
+    def save(self):
+        ...
+
+    def remove(self):
+        ...
+
 
 
 # todo Add order + edit in Order Details are to be created

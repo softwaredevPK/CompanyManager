@@ -3,7 +3,6 @@ import sys
 from PySide2 import QtCore, QtGui, QtWidgets
 from db_manager import db_manager, populate_countries
 
-raise KeyError
 
 if __name__ == '__main__':
     if not db_manager.are_countries_populated():

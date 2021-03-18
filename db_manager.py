@@ -104,6 +104,9 @@ class DBManager:
     def get_order_details(self, order_id):
         return self.session.query(OrderDetail).filter(OrderDetail.order_id == order_id).all()
 
+    def get_customer_products(self, customer_id):
+        return self.session.query(PriceTable).filter(PriceTable.customer_id == customer_id).all()
+
 
 db_manager = DBManager()
 
