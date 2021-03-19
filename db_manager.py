@@ -73,6 +73,11 @@ class DBManager:
         q = self.session.query(Category).filter(Category.name == category_name)
         return self.session.query(literal(True)).filter(q.exists()).scalar()
 
+    def product_in_order_exist(self, order_id, product_id):
+        q = self.session.query(OrderDetail).filter(OrderDetail.product_id == product_id,
+                                                         OrderDetail.order_id == order_id)
+        return self.session.query(literal(True)).filter(q.exists()).scalar()
+
     def get_price_table(self, customer_id):
         return self.session.query(PriceTable).filter(PriceTable.customer_id == customer_id).all()
 

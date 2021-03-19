@@ -8,7 +8,7 @@ from gui_windows.show_orders_widget import Ui_show_orders
 from gui_windows.order_details_widget import Ui_order_details
 from gui_windows.create_order_widget import Ui_create_order
 from PySide2 import QtCore, QtGui, QtWidgets
-from orm import Customer, Supplier, Product, Category, PriceTable, CustomerOrder, OrderDetail
+from orm import Customer, Supplier, Product, Category, PriceTable, CustomerOrder, OrderDetail, Order
 from db_manager import db_manager
 from functools import partial
 from utilities import show_msg_box, MessageError
@@ -162,7 +162,7 @@ class StartWindow(QtWidgets.QMainWindow):
             msg_box = QtWidgets.QMessageBox(icon=QtWidgets.QMessageBox.Information,
                                             text="There are no customers in your DataBase.")
             msg_box.exec_()
-            return
+            return None, None
         else:
             customer_name, ok = QtWidgets.QInputDialog.getItem(self, 'Editor', 'Choose customer to edit', items, 0,
                                                                False)
@@ -197,7 +197,8 @@ class StartWindow(QtWidgets.QMainWindow):
         if ok:  # not canceled
             customer = db_manager.get_customer(customer_name)
             create = CreateOrderWidget(customer)
-            create.exec_()
+            if create.runnable():
+                create.exec_()
 
 
 class AddCustomer(QtWidgets.QDialog):
@@ -845,43 +846,103 @@ class OrderDetailsWidget(QtWidgets.QDialog, SelectedRowMixin):
 class OrderDetailsModel(MyAbstractModel):
     model = OrderDetail
 
-    def __init__(self, order_id):
+    def __init__(self, order_id=None):
         super().__init__()
-        self.list = db_manager.get_order_details(order_id)
+        if order_id is None:
+            self.list = []
+        else:
+            self.list = db_manager.get_order_details(order_id)
 
-# todo undder quantiti regex, set current date for dates
+
 class CreateOrderWidget(QtWidgets.QDialog, SelectedRowMixin):
+
     def __init__(self, customer):
         super().__init__()
         self.customer = customer
         self.ui = Ui_create_order()
         self.ui.setupUi(self)
-        # self.model = OrderDetailsModel(order_id)
+        self.model = OrderDetailsModel()
+        self.order = None
+        self.saved = False
         self.products = db_manager.get_customer_products(customer.id)
         self._connect()
+
+    def closeEvent(self, arg__1:PySide2.QtGui.QCloseEvent):
+        if self.saved:
+            self.accept()
+        else:
+            db_manager.session.rollback()
+            self.accept()
 
     def _connect(self):
         self.ui.product_IW.addItems(self.products)
         for i, product in enumerate(self.products):
             self.ui.product_IW.setItemText(i, product.product.name)
 
-        # self.ui.table_IV.setModel(self.model)
+        self.ui.quantity_IW.setValidator(QtGui.QRegExpValidator("\d+", self.ui.quantity_IW))
+        self.ui.order_date_IW.setDate(QtCore.QDate.currentDate())
+        self.ui.delivery_date_IW.setDate(QtCore.QDate.currentDate())
+        self.ui.table_IV.setModel(self.model)
         self.ui.save_B.clicked.connect(self.save)
         self.ui.add_B.clicked.connect(self.add)
         self.ui.remove_B.clicked.connect(self.remove)
 
+    def runnable(self):
+        if len(self.products) == 0:
+            show_msg_box(f"Missing price-list for {self.customer.name}")
+            return False
+        else:
+            return True
+
+    @property
+    def order_date(self):
+        return self.ui.order_date_IW.date().toPython()
+
+    @property
+    def delivery_date(self):
+        return self.ui.delivery_date_IW.date().toPython()
+
+    @property
+    def quantity(self):
+        return self.ui.quantity_IW.text()
+
+    @property
+    def product(self):
+        return self.products[self.ui.product_IW.currentIndex()]
+
     def add(self):
-        ...
+        if self.order is None:
+            self.order = Order(customer_id=self.customer.id, order_date=self.order_date, delivery_date=self.delivery_date)
+            db_manager.session.add(self.order)
+            db_manager.session.flush()
+        if db_manager.product_in_order_exist(self.order.id, self.product.product_id):  # such item has been added already
+            return
+        order_detail = OrderDetail(order_id=self.order.id, product_id=self.product.product_id, quantity=self.quantity, unit_price=self.product.price)
+        db_manager.session.add(order_detail)
+        db_manager.session.flush()
+        self.model.add_item(order_detail)
+        self.ui.table_IV.resizeColumnsToContents()
 
     def save(self):
-        ...
+        self.saved = True
+        self.order = Order(customer_id=self.customer.id, order_date=self.order_date, delivery_date=self.delivery_date) # refresh if has changed
+        db_manager.session.commit()  # all flushed items are commited
+        # add to OrderDetail products order_id and commit them
+        self.accept()
 
     def remove(self):
-        ...
+        selected_row = self.get_selected_row(self.ui.table_IV)
+        if selected_row is None:
+            return
+        order_detail = self.model.list[selected_row]
+        db_manager.session.delete(order_detail)
+        db_manager.session.flush()
+        self.model.delete_item(selected_row)
+        self.ui.table_IV.resizeColumnsToContents()
 
 
 
-# todo Add order + edit in Order Details are to be created
+# todo edit in Order Details are to be created
 #todo show_orders edit dates btn and function to being created
 
 
