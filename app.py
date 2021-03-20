@@ -618,6 +618,8 @@ class ProductWidget(QtWidgets.QDialog, SelectedRowMixin):
             self.ui.Products_IV.resizeColumnsToContents()
 
     def change_status(self):
+        """Function change status of given product on Product Table and in all related price-tables.
+        If product is no available in general, we can't allow customers to buy it"""
         selected_row = self.get_selected_row(self.ui.Products_IV)
         if selected_row is None:
             return
@@ -626,6 +628,13 @@ class ProductWidget(QtWidgets.QDialog, SelectedRowMixin):
             product.active = False
         else:
             product.active = True
+        # status changes in all price-tales
+        price_tables_product = db_manager.get_all_price_tables_for_product_id(product.id)
+        for product in price_tables_product:
+            if product.active:
+                product.active = False
+            else:
+                product.active = True
         db_manager.session.commit()
         self.ui.Products_IV.model().layoutChanged.emit()
 
@@ -758,7 +767,8 @@ class PriceTableWidget(QtWidgets.QDialog, SelectedRowMixin):
         if db_manager.product_in_price_table_exists(product.id, self.customer_id):
             return
         price = self.price
-        price_table = PriceTable(product_id=product.id, customer_id=self.customer_id, price=0 if price == '' else float(price))
+        price_table = PriceTable(product_id=product.id, customer_id=self.customer_id, price=0 if price == '' else float(price),
+                                 active=product.active) # should have same status as product has in general
         db_manager.session.add(price_table)
         db_manager.session.commit()
         self.model.add_item(price_table)
@@ -802,6 +812,7 @@ class ShowOrdersWidget(QtWidgets.QDialog, SelectedRowMixin):
     def _connect(self):
         self.ui.orders_IV.setModel(self.model)
         self.ui.details_B.clicked.connect(self.details)
+        self.ui.edit_B.clicked.connect(self.edit)
 
     def details(self):
         selected_row = self.get_selected_row(self.ui.orders_IV)
@@ -811,6 +822,17 @@ class ShowOrdersWidget(QtWidgets.QDialog, SelectedRowMixin):
         details = OrderDetailsWidget(order_id)
         self.close()
         details.exec_()
+
+    def edit(self):
+        selected_row = self.get_selected_row(self.ui.orders_IV)
+        if selected_row is None:
+            return
+        order_id = self.model.get_item(selected_row).id
+        customer = db_manager.get_customer_by_order_id(order_id)
+        edit_widget = EditOrderWidget(customer, order_id)
+        if edit_widget.runnable():
+            self.accept()
+            edit_widget.exec_()
 
 
 class ShowOrdersModel(MyAbstractModel):
@@ -824,6 +846,7 @@ class ShowOrdersModel(MyAbstractModel):
 class OrderDetailsWidget(QtWidgets.QDialog, SelectedRowMixin):
     def __init__(self, order_id):
         super().__init__()
+        self.order_id = order_id
         self.ui = Ui_order_details()
         self.ui.setupUi(self)
         self.model = OrderDetailsModel(order_id)
@@ -840,7 +863,11 @@ class OrderDetailsWidget(QtWidgets.QDialog, SelectedRowMixin):
         orders.exec_()
 
     def edit(self):
-        ... # todo
+        customer = db_manager.get_customer_by_order_id(self.order_id)
+        edit_widget = EditOrderWidget(customer, self.order_id)
+        if edit_widget.runnable():
+            self.accept()
+            edit_widget.exec_()
 
 
 class OrderDetailsModel(MyAbstractModel):
@@ -941,10 +968,43 @@ class CreateOrderWidget(QtWidgets.QDialog, SelectedRowMixin):
         self.ui.table_IV.resizeColumnsToContents()
 
 
+class EditOrderWidget(CreateOrderWidget):
+    def __init__(self, customer, order_id):
+        QtWidgets.QDialog.__init__(self)
+        self.customer = customer
+        self.ui = Ui_create_order()
+        self.ui.setupUi(self)
+        self.order = db_manager.get_order_by_order_id(order_id)
+        self.model = OrderDetailsModel(order_id)
+        self.saved = False
+        self.products = db_manager.get_customer_products(customer.id)
+        self._connect()
 
-# todo edit in Order Details are to be created
-#todo show_orders edit dates btn and function to being created
+    def _connect(self):
+        super()._connect()
+        self.ui.order_date_IW.setDate(self.order.order_date)
+        self.ui.delivery_date_IW.setDate(self.order.delivery_date)
+
+    def save(self):
+        """Save method here, should change update Order + OrderDetails models"""
+        self.saved = True
+        self.order.order_date = self.order_date
+        self.order.delivery_date = self.delivery_date
+        db_manager.session.commit()  # all flushed items are commited
+        # add to OrderDetail products order_id and commit them
+        self.accept()
+
+    def add(self):
+        if db_manager.product_in_order_exist(self.order.id, self.product.product_id):  # such item has been added already
+            return
+        order_detail = OrderDetail(order_id=self.order.id, product_id=self.product.product_id, quantity=self.quantity, unit_price=self.product.price)
+        db_manager.session.add(order_detail)
+        db_manager.session.flush()
+        self.model.add_item(order_detail)
+        self.ui.table_IV.resizeColumnsToContents()
 
 
 # todo i have comma instead of dot in Price-Lists
-# todo status in price_list should be connected with status of product(can't be avalaible when products is not etc), so Product should change it's status
+
+
+# todo refresh ReadMe(new screenshots needed  descirption)

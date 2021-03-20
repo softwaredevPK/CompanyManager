@@ -150,6 +150,10 @@ class OrderDetail(Base, AbstractReqMethods):
     def _values(self):
         return [self.product.name, self.product.category, self.quantity, self.unit_price, self.total_price]
 
+    @staticmethod
+    def get_editable_keys():
+        return [OrderDetail.cols().index('quantity')]
+
 
 class Country(Base):
     __tablename__ = 'countries'
@@ -187,4 +191,4 @@ class CustomerOrder(Base, AbstractReqMethods):
         return ['customer_name', 'order_date', 'delivery_date']
 
     def _values(self):
-        return [self.name, self.order_date, self.delivery_date]
+        return [self.name, self.order_date.strftime("%d/%m/%Y"), self.delivery_date.strftime("%d/%m/%Y")]

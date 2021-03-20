@@ -22,7 +22,7 @@ class Ui_order_details(object):
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.table_IV = QTableView(order_details)
         self.table_IV.setObjectName(u"table_IV")
-        self.table_IV.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.table_IV.setSelectionMode(QAbstractItemView.NoSelection)
         self.table_IV.setSelectionBehavior(QAbstractItemView.SelectRows)
 
         self.verticalLayout.addWidget(self.table_IV)

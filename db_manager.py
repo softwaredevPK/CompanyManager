@@ -3,7 +3,7 @@ from pathlib import Path
 import pandas as pd
 from sqlalchemy import literal
 
-from orm import Supplier, Country, Customer, DataAccessLayer, Product, Category, PriceTable, CustomerOrder, OrderDetail
+from orm import Supplier, Country, Customer, DataAccessLayer, Product, Category, PriceTable, CustomerOrder, OrderDetail, Order
 
 
 class DBManager:
@@ -111,6 +111,16 @@ class DBManager:
 
     def get_customer_products(self, customer_id):
         return self.session.query(PriceTable).filter(PriceTable.customer_id == customer_id).all()
+
+    def get_customer_by_order_id(self, order_id):
+        customer_id = self.session.query(Order.customer_id).filter(Order.id == order_id).one()[0]
+        return self.session.query(Customer).filter(Customer.id == customer_id).one()
+
+    def get_order_by_order_id(self, order_id):
+        return self.session.query(Order).filter(Order.id == order_id).one()
+
+    def get_all_price_tables_for_product_id(self, product_id):
+        return self.session.query(PriceTable).filter(PriceTable.product_id == product_id).all()
 
 
 db_manager = DBManager()

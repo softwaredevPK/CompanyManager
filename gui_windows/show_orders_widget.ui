@@ -46,6 +46,13 @@
       </spacer>
      </item>
      <item>
+      <widget class="QPushButton" name="edit_B">
+       <property name="text">
+        <string>Edit</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QPushButton" name="details_B">
        <property name="text">
         <string>show details</string>

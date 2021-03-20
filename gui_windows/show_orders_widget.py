@@ -35,6 +35,11 @@ class Ui_show_orders(object):
 
         self.horizontalLayout.addItem(self.horizontalSpacer)
 
+        self.edit_B = QPushButton(show_orders)
+        self.edit_B.setObjectName(u"edit_B")
+
+        self.horizontalLayout.addWidget(self.edit_B)
+
         self.details_B = QPushButton(show_orders)
         self.details_B.setObjectName(u"details_B")
 
@@ -51,6 +56,7 @@ class Ui_show_orders(object):
 
     def retranslateUi(self, show_orders):
         show_orders.setWindowTitle(QCoreApplication.translate("show_orders", u"Form", None))
+        self.edit_B.setText(QCoreApplication.translate("show_orders", u"Edit", None))
         self.details_B.setText(QCoreApplication.translate("show_orders", u"show details", None))
     # retranslateUi
 
