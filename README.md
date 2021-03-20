@@ -58,7 +58,8 @@ Module used to create orders and to edit them for each customer separately.
 
 ### Show order and order details
 
-Module used to browse orders and deit details. 
+Module used to browse orders and deit details.
+
 ![show_order](/readme_screen_shoots/show_orders.png)
 ![show_order_details](/readme_screen_shoots/show_order_details.png)
 
