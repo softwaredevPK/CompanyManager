@@ -23,7 +23,7 @@ To build GUI Qt Designer was used as part of PySide2 library.
 ### First launch
 
 On the first launch of the program, user will be asked to setup company account.
-![add_customer](/readme_screen_shoots/add_customer.png)
+![add_customer](/readme_screen_shoots/add_supplier.png)
 
 When company account is created, user will be welcomed with welcome window for each run of program.
 ![welcome_window](/readme_screen_shoots/welcome_window.png)
@@ -39,7 +39,7 @@ Main window contains buttons which open appropriate modules of program.
 #### Add and Edit Customer
 
 Those modules allows to add customers to company database and edit them. 
-![add_customer](/readme_screen_shoots/add_customer.png)
+![add_customer](/readme_screen_shoots/edit_customer.png)
 
 #### My Products
 
@@ -50,6 +50,17 @@ Module used to manage information about products that company has in sell.
 
 Module used to create and manage Price-lists for each customer separately. 
 ![price_lists](/readme_screen_shoots/price_list.png)
+
+#### Add and Edit new Order
+
+Module used to create orders and to edit them for each customer separately. 
+![add_n_edit_order](/readme_screen_shoots/add_n_edit_order.png)
+
+### Show order and order details
+
+Module used to browse orders and deit details. 
+![show_order](/readme_screen_shoots/show_order.png)
+![show_order_details](/readme_screen_shoots/show_order_details.png)
 
 
 ## Technologies
