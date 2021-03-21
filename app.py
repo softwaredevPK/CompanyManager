@@ -85,11 +85,14 @@ class SelectedRowMixin:
 
     @staticmethod
     def get_selected_row(selectable_widget):
+        """
+        Method to get selected row from TableViews which have single selection mode on Rows
+        """
         selected_indexes = {i.row() for i in selectable_widget.selectionModel().selectedIndexes()}
         if len(selected_indexes) == 1:
             return list(selected_indexes)[0]
         else:
-            return None  # expected single selection mode
+            return None
 
 
 class WelcomeWindow(QtWidgets.QMainWindow):
@@ -106,9 +109,9 @@ class WelcomeWindow(QtWidgets.QMainWindow):
         self.ui.edit_B.clicked.connect(self.edit)
         self.ui.start_B.clicked.connect(self.start)
 
-    def check_settings(self):
+    def runnable(self):
         """Method used to check if Company Account was created.
-         If it return False, then window shouldn't use show method."""
+         If it return False, then window shouldn't be shown."""
         if not db_manager.is_supplier_created():  # before showing window check if acc is created
             if not self.add_company():  # if user would close window without creating acc do not open window
                 return False
@@ -157,6 +160,8 @@ class StartWindow(QtWidgets.QMainWindow):
         self.ui.add_new_order_B.clicked.connect(self.add_new_order)
 
     def customer_input_dialog(self):
+        """Method used to ask user to choose Customer from list in input dialog.
+        return: customer_name, True/False (False when cancelled)"""
         items = db_manager.get_customers_names()
         if len(items) == 0:
             msg_box = QtWidgets.QMessageBox(icon=QtWidgets.QMessageBox.Information,
@@ -404,6 +409,7 @@ class AddCustomer(QtWidgets.QDialog):
                                   email=self.email,
                                   phone_number=self.phone_no,
                                   is_person=True)
+            # Constraint check(if all unique requirements are passed)
             try:
                 self.check_customer_constraints(record)
             except MessageError as msg:
@@ -472,6 +478,7 @@ class EditCustomer(AddCustomer):
                 name = self.first_name + self.surname
                 country = ''
                 tin_code = ''
+            # Constraint check(if all unique requirements are passed)
             try:
                 self.check_customer_constraints(name, full_name, country, tin_code)
             except MessageError as msg:
@@ -513,6 +520,7 @@ class AddCompany(AddCustomer):
                               city=self.city,
                               email=self.email,
                               phone_number=self.phone_no)
+            # no need of checking constraint, because this widget will be used only once to create user account(company)
             db_manager.session.add(record)
             db_manager.session.commit()
             self.accept()
@@ -546,6 +554,7 @@ class EditCompany(AddCompany):
         self.ui.phone_number_IW.setText(str(self.company.phone_number))
 
     def update(self):
+        """Method updates data in DB"""
         if self.req_fields_filled():
             self.company.full_name = self.long_name
             self.company.name = self.short_name
@@ -595,6 +604,7 @@ class ProductWidget(QtWidgets.QDialog, SelectedRowMixin):
 
     def add(self):
         product = Product(name=self.product_name, category=self.category)
+        # Constraint check(if all unique requirements are passed)
         try:
             self.check_product_constraints(product)
         except MessageError as msg:
@@ -610,6 +620,7 @@ class ProductWidget(QtWidgets.QDialog, SelectedRowMixin):
         if selected_row is None:
             return
         product = self.model.get_item(selected_row)
+        # edit is made by EditWidget
         edit_widget = EditProductWidget(product.name)
         if edit_widget.exec_():
             product.name = edit_widget.new_name
@@ -639,6 +650,7 @@ class ProductWidget(QtWidgets.QDialog, SelectedRowMixin):
         self.ui.Products_IV.model().layoutChanged.emit()
 
     def add_category(self):
+        """Method used to create mew category for products"""
         category_name, ok = QtWidgets.QInputDialog.getText(self, 'Category', 'Please add new category.')
         if not ok:
             return
@@ -682,6 +694,7 @@ class EditProductWidget(QtWidgets.QDialog):
 
 class PriceTableWidget(QtWidgets.QDialog, SelectedRowMixin):
 
+    # Used for RegexValidation purposes
     class ValidatedItemDelegate(QtWidgets.QStyledItemDelegate):
         """https://stackoverflow.com/questions/13449971/pyside-pyqt4-how-to-set-a-validator-when-editing-a-cell-in-a-qtableview/13449972#13449972"""
 
@@ -729,6 +742,7 @@ class PriceTableWidget(QtWidgets.QDialog, SelectedRowMixin):
         self.ui.table_IV.setItemDelegate(self.ValidatedItemDelegate())
 
     def runnable(self):
+        """Method used to check if widget can be .exec"""
         self.set_customer_id()
         if self.customer_id is None:
             return False
@@ -737,6 +751,9 @@ class PriceTableWidget(QtWidgets.QDialog, SelectedRowMixin):
             return True
 
     def set_customer_id(self):
+        """
+        Method try to set customer_ids in appropriate widget if possible.
+        """
         customers = db_manager.get_customers_names()
         if len(customers) == 0:
             show_msg_box("Missing customers")
@@ -764,11 +781,11 @@ class PriceTableWidget(QtWidgets.QDialog, SelectedRowMixin):
         if product_index == -1:  # missing products
             return
         product = self.products[product_index]
-        if db_manager.product_in_price_table_exists(product.id, self.customer_id):
+        if db_manager.product_in_price_table_exists(product.id, self.customer_id):  # can't add multiple prices for 1 product
             return
         price = self.price
         price_table = PriceTable(product_id=product.id, customer_id=self.customer_id, price=0 if price == '' else float(price),
-                                 active=product.active) # should have same status as product has in general
+                                 active=product.active) # should have same status as product has actually
         db_manager.session.add(price_table)
         db_manager.session.commit()
         self.model.add_item(price_table)
@@ -882,6 +899,9 @@ class OrderDetailsModel(MyAbstractModel):
 
 
 class CreateOrderWidget(QtWidgets.QDialog, SelectedRowMixin):
+    """
+    Widget is based on flush, because of implementation of AbstractTableModel
+    """
 
     def __init__(self, customer):
         super().__init__()
@@ -915,6 +935,7 @@ class CreateOrderWidget(QtWidgets.QDialog, SelectedRowMixin):
         self.ui.remove_B.clicked.connect(self.remove)
 
     def runnable(self):
+        """Method used to check if widget can be .exec"""
         if len(self.products) == 0:
             show_msg_box(f"Missing price-list for {self.customer.name}")
             return False
@@ -995,7 +1016,7 @@ class EditOrderWidget(CreateOrderWidget):
         self.accept()
 
     def add(self):
-        if db_manager.product_in_order_exist(self.order.id, self.product.product_id):  # such item has been added already
+        if db_manager.product_in_order_exist(self.order.id, self.product.product_id):  # check such item has been added already
             return
         order_detail = OrderDetail(order_id=self.order.id, product_id=self.product.product_id, quantity=self.quantity, unit_price=self.product.price)
         db_manager.session.add(order_detail)
@@ -1007,4 +1028,5 @@ class EditOrderWidget(CreateOrderWidget):
 # todo i have comma instead of dot in Price-Lists
 
 
-# todo refresh ReadMe(new screenshots needed  descirption)
+
+# todo maybe something that generate Documents? For example: Generate pdf - create pdf for Order (maybe word->pdf or Excel -> PDF)

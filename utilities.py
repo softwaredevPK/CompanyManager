@@ -13,7 +13,7 @@ class SingleInstanceClass:
 
 
 def show_msg_box(text: Tuple[str, Exception]):
-    """Message box with information of need to create company acc"""
+    """Function used to show msg_box"""
     text = str(text)
     msg = QtWidgets.QMessageBox()
     msg.setText(text)

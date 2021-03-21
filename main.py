@@ -10,7 +10,7 @@ if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
 
     window = WelcomeWindow()
-    if window.check_settings():
+    if window.runnable():
         window.show()
         sys.exit(app.exec_())
 
