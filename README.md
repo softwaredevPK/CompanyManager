@@ -71,6 +71,7 @@ Project is fully build with python (ver 3.8) and its open source libraries:
 - **sqlalchemy==1.3.23** - to manage DataBase
 - **PySide2==5.15.1** - to build GUI
 - **pandas==1.1.2** - to deal with .csv files
+- **xlwings==0.23.0** - create xlsx files and save them as pdf from it
 
 ### PySide2 namespace
 Objects names refer to their text and type of widget, by use of below shortcuts:

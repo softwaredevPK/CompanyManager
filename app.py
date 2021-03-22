@@ -11,9 +11,9 @@ from PySide2 import QtCore, QtGui, QtWidgets
 from orm import Customer, Supplier, Product, Category, PriceTable, CustomerOrder, OrderDetail, Order
 from db_manager import db_manager
 from functools import partial
-from utilities import show_msg_box, MessageError
+from utilities import show_msg_box, MessageError, ExcelApplicationContextManager
 import PySide2
-import re
+import xlwings as xw
 
 
 class MyAbstractModel(QtCore.QAbstractTableModel):
@@ -850,6 +850,17 @@ class ShowOrdersWidget(QtWidgets.QDialog, SelectedRowMixin):
         if edit_widget.runnable():
             self.accept()
             edit_widget.exec_()
+
+    def to_excel(self):
+        # todo create button, add screen to readme
+        # I decided to use xlwings to set print area and other properties that are unavailable in other libraries
+        with ExcelApplicationContextManager(app=None, visible=False, kill_app=True, display_alerts=False,
+                                            ask_to_update_links=False, enable_events=False, screen_updating=False) as app:
+            wb = xw.Book()
+            sheet = wb.sheets[0]
+
+
+
 
 
 class ShowOrdersModel(MyAbstractModel):
