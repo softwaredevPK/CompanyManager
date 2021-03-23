@@ -74,6 +74,7 @@ class Supplier(Base):
     address = Column(String)
     email = Column(String)
     phone_number = Column(Integer)
+    country_tin = column_property(country + tin_code)
 
 
 class Product(Base, AbstractReqMethods):

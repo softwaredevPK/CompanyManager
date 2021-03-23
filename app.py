@@ -852,12 +852,70 @@ class ShowOrdersWidget(QtWidgets.QDialog, SelectedRowMixin):
             edit_widget.exec_()
 
     def to_excel(self):
+
+        def set_borders(sheet_range, *, top=False, bottom=False, left=False, right=False, line_style=1, weight=2, theme_color=1, tint_n_shade=0):
+            """function used to create borders on given range of sheet
+            Below int values are vba values of properties:  https://docs.microsoft.com/en-us/office/vba/api/excel.borders"""
+            borders = []
+            if top:
+                borders.append(8)
+            if bottom:
+                borders.append(9)
+            if left:
+                borders.append(7)
+            if right:
+                borders.append(10)
+            for border in borders:
+
+                sheet_range.api.Borders(border).LineStyle = line_style
+                sheet_range.api.Borders(border).Weight = weight
+                sheet_range.api.Borders(border).ThemeColor = theme_color
+                sheet_range.api.Borders(border).TintAndShade = tint_n_shade
         # todo create button, add screen to readme
         # I decided to use xlwings to set print area and other properties that are unavailable in other libraries
+        selected_row = self.get_selected_row(self.ui.orders_IV)
+        if selected_row is None:
+            return
+        order = self.model.get_item(selected_row)
+        supplier = db_manager.get_supplier()
+        customer = db_manager.get_customer(order.customer_id)
+        order_details = db_manager.get_order_details(order.id)
         with ExcelApplicationContextManager(app=None, visible=False, kill_app=True, display_alerts=False,
-                                            ask_to_update_links=False, enable_events=False, screen_updating=False) as app:
+                                            ask_to_update_links=False, enable_events=False, screen_updating=False) as _:
             wb = xw.Book()
             sheet = wb.sheets[0]
+            sheet.range('A1').value = f'Order no. {order.id}'
+            sheet.range('A2').value = f"Delivery date {order.delivery_date.strftime('%d/%m/%Y')}"
+            sheet.range('E1').value = order.order_date.strftime('%d/%m/%Y')
+
+            # Supplier data
+            sheet.range('A4').value = "Supplier"
+            sheet.range('A5').value = supplier.full_name
+            sheet.range('A6').value = supplier.address
+            sheet.range('A7').value = f'{supplier.zip_code} {supplier.city}'
+            sheet.range('A8').value = supplier.country_tin
+            sheet.range('A9').value = f'E-mail: {supplier.email}'
+            sheet.range('A10').value = f'Phone: {supplier.phone_number}'
+
+            # Customer data
+            sheet.range('D4').value = 'Customer'
+            sheet.range('D5').value = customer.full_name
+            sheet.range('D6').value = customer.address
+            sheet.range('D7').value = f'{customer.zip_code} {customer.city}'
+            sheet.range('D8').value = customer.country_tin
+            sheet.range('D9').value = f'E-mail: {customer.email}'
+            sheet.range('D10').value = f'Phone: {customer.phone_number}'
+
+            # Create header of table
+            sheet.range('D10').value = ["No.", 'Product name', 'Quantity', 'Unit price', 'Total price']
+            set_borders(sheet.range('D10:E10', top=True, bottom=True, left=True, right=True))
+            for i, order_detail in order_details:
+                no = i + 1
+                self.sheet.range(f'D{10 + no}').value = [order_detail.product.name, order_detail.quantity, order_detail.unit_price, order_detail.total_price]
+
+
+
+
 
 
 

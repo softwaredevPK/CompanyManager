@@ -122,6 +122,9 @@ class DBManager:
     def get_all_price_tables_for_product_id(self, product_id):
         return self.session.query(PriceTable).filter(PriceTable.product_id == product_id).all()
 
+    def get_supplier(self):
+        return self.session.query(Supplier).one()
+
 
 db_manager = DBManager()
 
