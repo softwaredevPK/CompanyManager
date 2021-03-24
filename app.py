@@ -493,7 +493,7 @@ class EditCustomer(AddCustomer):
                 self.customer.city = self.city
                 self.customer.zip_code = self.zip_code
                 self.customer.email = self.email
-                self.customer.phone_number = self.phone_no()
+                self.customer.phone_number = self.phone_no
                 db_manager.session.commit()
                 self.accept()
 
@@ -933,11 +933,6 @@ class ShowOrdersWidget(QtWidgets.QDialog, SelectedRowMixin):
             sheet.api.PageSetup.FitToPagesWide = 1
             sheet.api.PageSetup.FitToPagesTall = 1
             sheet.book.app.visible_ = True
-
-
-
-
-
 
 
 class ShowOrdersModel(MyAbstractModel):

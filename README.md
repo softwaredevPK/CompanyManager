@@ -63,6 +63,8 @@ Module used to browse orders and edit details.
 ![show_order](/readme_screen_shoots/show_orders.png)
 ![show_order_details](/readme_screen_shoots/show_order_details.png)
 
+It is possible for user to generate excel files, which can be printed.
+![order_to_excel](/readme_screen_shoots/order_to_excel.png)
 
 ## Technologies
 
@@ -71,7 +73,7 @@ Project is fully build with python (ver 3.8) and its open source libraries:
 - **sqlalchemy==1.3.23** - to manage DataBase
 - **PySide2==5.15.1** - to build GUI
 - **pandas==1.1.2** - to deal with .csv files
-- **xlwings==0.23.0** - create xlsx files and save them as pdf from it
+- **xlwings==0.23.0** - to create xlsx files
 
 ### PySide2 namespace
 Objects names refer to their text and type of widget, by use of below shortcuts:
@@ -82,9 +84,9 @@ Objects names refer to their text and type of widget, by use of below shortcuts:
 <br />B - Buttons
 
 
-## Other files
+## Other filescust
 1. Countries_table.csv - Configuration file with ISO 3166 country codes. Used to populate DB for the first time with countries names and codes
 2. my_db.db - Database created with ORM sqlalchemy. Populated with Countries_table.csv on initial.
 
 ## Project status
-Project under development.
+Version 1.0.0
