@@ -31,6 +31,11 @@ class Ui_show_orders(object):
 
         self.horizontalLayout = QHBoxLayout()
         self.horizontalLayout.setObjectName(u"horizontalLayout")
+        self.to_excel_B = QPushButton(show_orders)
+        self.to_excel_B.setObjectName(u"to_excel_B")
+
+        self.horizontalLayout.addWidget(self.to_excel_B)
+
         self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
         self.horizontalLayout.addItem(self.horizontalSpacer)
@@ -56,6 +61,7 @@ class Ui_show_orders(object):
 
     def retranslateUi(self, show_orders):
         show_orders.setWindowTitle(QCoreApplication.translate("show_orders", u"Form", None))
+        self.to_excel_B.setText(QCoreApplication.translate("show_orders", u"To Excel", None))
         self.edit_B.setText(QCoreApplication.translate("show_orders", u"Edit", None))
         self.details_B.setText(QCoreApplication.translate("show_orders", u"show details", None))
     # retranslateUi
