@@ -853,7 +853,7 @@ class ShowOrdersWidget(QtWidgets.QDialog, SelectedRowMixin):
 
     def to_excel(self):
 
-        def set_borders(sheet_range, *, top=False, bottom=False, left=False, right=False, line_style=1, weight=2, theme_color=1, tint_n_shade=0):
+        def set_borders(sheet_range, top=False, bottom=False, left=False, right=False, line_style=1, weight=2, theme_color=1, tint_n_shade=0):
             """function used to create borders on given range of sheet
             Below int values are vba values of properties:  https://docs.microsoft.com/en-us/office/vba/api/excel.borders"""
             borders = []
@@ -878,7 +878,7 @@ class ShowOrdersWidget(QtWidgets.QDialog, SelectedRowMixin):
             return
         order = self.model.get_item(selected_row)
         supplier = db_manager.get_supplier()
-        customer = db_manager.get_customer(order.customer_id)
+        customer = db_manager.get_customer_by_order_id(order.id)
         order_details = db_manager.get_order_details(order.id)
         with ExcelApplicationContextManager(app=None, visible=False, kill_app=True, display_alerts=False,
                                             ask_to_update_links=False, enable_events=False, screen_updating=False) as _:
@@ -907,13 +907,28 @@ class ShowOrdersWidget(QtWidgets.QDialog, SelectedRowMixin):
             sheet.range('D10').value = f'Phone: {customer.phone_number}'
 
             # Create header of table
-            sheet.range('D10').value = ["No.", 'Product name', 'Quantity', 'Unit price', 'Total price']
-            set_borders(sheet.range('D10:E10', top=True, bottom=True, left=True, right=True))
-            for i, order_detail in order_details:
+            sheet.range('A12').value = ["No.", 'Product name', 'Quantity', 'Unit price', 'Total price']
+            set_borders(sheet.range('A12:E12'), top=True, bottom=True, left=True, right=True)
+            sheet.range('A12:E12').api.Interior.color = 10921638
+            # write data to table
+            total = 0
+            for i, order_detail in enumerate(order_details):
                 no = i + 1
-                self.sheet.range(f'D{10 + no}').value = [order_detail.product.name, order_detail.quantity, order_detail.unit_price, order_detail.total_price]
+                sheet.range(f'A{12 + no}').value = [order_detail.product.name, order_detail.quantity, order_detail.unit_price, order_detail.total_price]
+                total += order_detail.total_price
+            for col in 'ABCDE':
+                set_borders(sheet.range(f'{col}13:{col}{12 + no}', top=True, bottom=True, left=True, right=True))
 
+            sheet.range(f'D{12 + no + 2}').value = 'TOTAL'  # 2 rows below last row table
+            sheet.range(f'E{12 + no + 2}').value = total
+            set_borders(f'A{12 + no + 2}:E{12 + no + 2}', top=True, weight=-4138)
+            sheet.range('A:E').api.EntireColumn.Autofit
+            sheet.book.app.api.ActiveWindow.DisplayGridlines = False
 
+            sheet.api.PageSetup.Zoom = False
+            sheet.api.PageSetup.FitToPagesWide = 1
+            sheet.api.PageSetup.FitToPageTall = 1
+            # sheet.book.save()
 
 
 
