@@ -1106,10 +1106,3 @@ class EditOrderWidget(CreateOrderWidget):
         db_manager.session.flush()
         self.model.add_item(order_detail)
         self.ui.table_IV.resizeColumnsToContents()
-
-
-# todo i have comma instead of dot in Price-Lists
-
-
-
-# todo maybe something that generate Documents? For example: Generate pdf - create pdf for Order (maybe word->pdf or Excel -> PDF)

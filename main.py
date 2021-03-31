@@ -13,4 +13,3 @@ if __name__ == '__main__':
     if window.runnable():
         window.show()
         sys.exit(app.exec_())
-

@@ -89,4 +89,4 @@ Objects names refer to their text and type of widget, by use of below shortcuts:
 2. my_db.db - Database created with ORM sqlalchemy. Populated with Countries_table.csv on initial.
 
 ## Project status
-Version 1.0.0
+Version 1.0.1

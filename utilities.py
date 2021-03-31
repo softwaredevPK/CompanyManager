@@ -2,6 +2,7 @@ from PySide2 import QtWidgets
 from typing import Tuple
 import xlwings as xw
 
+
 xw._xlwindows.N_COM_ATTEMPTS = 5  # no of attempts changed 5 to avoid infinite loops in case of error
 
 
@@ -58,7 +59,6 @@ class ExcelApplicationContextManager:
         self.def_events = None
 
     def __enter__(self):
-
         # below property and its setter are used to create visible_ property on xlwings app
         @property
         def visible_(self):
